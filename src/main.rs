@@ -13,4 +13,7 @@ fn main() {
     //     println!("{}", cell);
     // }
     println!("{}", Board::test().repr());
+
+    println!("{}Witek{}", col::FG::color(147, 1, 211), col::END);
+    println!("{}Witek{}", col::BG::color(147, 1, 211), col::END);
 }

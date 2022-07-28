@@ -4,8 +4,32 @@ pub mod colors {
     pub const END: &str = "\x1b[0m";
     pub const NONE: &str = "";
 
-    pub fn colored_text(text: &str, fg: &str, bg: &str) -> String {
-        return format!("{}{}{}{}", fg, bg, text, END);
+    #[derive(Copy, Clone)]
+    pub struct RGBColor {
+        pub r: usize,
+        pub g: usize,
+        pub b: usize,
+    }
+
+    impl RGBColor {
+        pub fn new(r: usize, g: usize, b: usize) -> Self {
+            RGBColor {
+                r, g, b
+            }
+        }
+    }
+
+    pub fn colored_text(text: &str, fg: &str, bg: &str, has_end: bool) -> String {
+        if has_end {
+            format!("{}{}{}{}", fg, bg, text, END)
+        } else {
+            format!("{}{}{}{}", fg, bg, text, "")
+        }
+    }
+
+
+    pub fn bg_color(r: usize, g: usize, b: usize) -> String {
+        return format!("\x1b[48;2;{};{};{}m", r, g, b)
     }
 
     pub mod style {
@@ -27,6 +51,10 @@ pub mod colors {
         pub const BEIGE: &str = "\x1b[36m";
         pub const WHITE: &str = "\x1b[37m";
         pub const ORANGE: &str = "\x1b[38;2;255;128;0m";
+
+        pub fn color(r: usize, g: usize, b: usize) -> String {
+            return format!("\x1b[38;2;{};{};{}m", r, g, b)
+        }
     }
 
     pub mod BG {
@@ -38,6 +66,10 @@ pub mod colors {
         pub const VIOLET: &str = "\x1b[45m";
         pub const BEIGE: &str = "\x1b[46m";
         pub const WHITE: &str = "\x1b[47m";
-        pub const ORANGE: &str = "\x1b[38;2;255;153;51m";
+        pub const ORANGE: &str = "\x1b[48;2;255;153;51m";
+
+        pub fn color(r: usize, g: usize, b: usize) -> String {
+            return format!("\x1b[48;2;{};{};{}m", r, g, b)
+        }
     }
 }
