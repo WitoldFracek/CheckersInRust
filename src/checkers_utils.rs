@@ -75,13 +75,6 @@ impl MoveExecutor {
         false
     }
 
-    fn can_queen_capture(board: &Board, queen: (usize, usize), current_color: CheckersColor) -> bool {
-        for direction in Self::DIRECTIONS {
-
-        }
-        false
-    }
-
     fn is_pawn_jump_possible(board: &Board, pawn: (usize, usize), direction: (i32, i32), current_color: CheckersColor) -> bool {
         let ((x, y), (dx, dy)) = (pawn, direction);
         if !Self::is_in_bounds(x as i32 + dx, y as i32 + dy) {
@@ -107,6 +100,15 @@ impl MoveExecutor {
         }
     }
 
+    fn can_queen_capture(board: &Board, queen: (usize, usize), current_color: CheckersColor) -> bool {
+        for direction in Self::DIRECTIONS {
+            if Self::is_queen_jump_possible(board, queen, direction, current_color) {
+                return true;
+            }
+        }
+        false
+    }
+
     fn is_queen_jump_possible(board: &Board, queen: (usize, usize), direction: (i32, i32), current_color: CheckersColor) -> bool {
         let (dx, dy) = direction;
         let diagonal = Self::diagonal(board, queen, direction);
@@ -126,6 +128,32 @@ impl MoveExecutor {
                 }
             }
             return false;
+        }
+        false
+    }
+
+    fn can_pawn_move(board: &Board, pawn: (usize, usize), current_color: CheckersColor) -> bool {
+        match current_color {
+            CheckersColor::White => Self::is_move_possible(board, pawn, (-1, -1)) || Self::is_move_possible(board, pawn, (-1, 1)),
+            CheckersColor::Black => Self::is_move_possible(board, pawn, (1, -1)) || Self::is_move_possible(board, pawn, (1, 1)),
+        }
+    }
+
+    fn can_queen_move(board: &Board, queen: (usize, usize), current_color: CheckersColor) -> boole {
+        for direction in Self::DIRECTIONS {
+            if Self::is_move_possible(board, queen, direction) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn is_move_possible(board: &Board, piece: (usize, usize), direction: (i32, i32)) -> bool {
+        let (dx, dy) = direction;
+        let (x, y) = piece;
+        let (x_to, y_to) = (x as i32 + dx, y as i32 + dy);
+        if Self::is_in_bounds(x_to, y_to) {
+            return board.is_empty_at(x_to as usize, y_to as usize).unwrap();
         }
         false
     }
