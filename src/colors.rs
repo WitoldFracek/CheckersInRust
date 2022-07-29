@@ -41,7 +41,7 @@ pub mod colors {
         pub const SELECTED: &str = "\x1b[7m";
     }
 
-    pub mod FG {
+    pub mod fg {
         pub const BLACK: &str = "\x1b[30m";
         pub const RED: &str = "\x1b[31m";
         pub const GREEN: &str = "\x1b[32m";
@@ -57,7 +57,7 @@ pub mod colors {
         }
     }
 
-    pub mod BG {
+    pub mod bg {
         pub const BLACK: &str = "\x1b[40m";
         pub const RED: &str = "\x1b[41m";
         pub const GREEN: &str = "\x1b[42m";

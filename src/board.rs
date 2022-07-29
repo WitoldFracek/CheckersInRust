@@ -1,9 +1,5 @@
-use std::borrow::Borrow;
-use std::cmp::Ordering;
-use std::convert::Infallible;
 use std::fmt;
 use std::fmt::Formatter;
-use std::ops::{Index};
 use std::vec::IntoIter;
 use crate::{Piece, White, Black, CheckersColor};
 use crate::checkers_utils::CheckersError;
@@ -47,7 +43,7 @@ impl Board {
     // temp function
     pub fn repr(&self) -> String {
         let mut ret = String::from("   A  B  C  D  E  F  G  H \n");
-        let mut row_counter = 0_i32;
+        let mut row_counter;
         let mut column_counter = 0_i32;
         for cell in self {
             row_counter = column_counter / 8;
@@ -67,19 +63,19 @@ impl Board {
     fn get_cell_repr(&self, cell: &Cell, column_counter: i32, row_counter: i32) -> String {
         let mut ret = "".to_string();
         if (column_counter - row_counter).abs() % 2 == 0 {
-            let colored = colored_text("   ", col::NONE, col::BG::WHITE, true);
+            let colored = colored_text("   ", col::NONE, col::bg::WHITE, true);
             ret = format!("{}{}", ret, colored);
         } else {
             ret = match cell.piece {
                 Some(piece) => {
                     colored_text(format!("{} {} ",ret, piece.colored_marker(false)).as_str(),
                                  col::NONE,
-                                 col::BG::color(70, 70, 70).as_str(),
+                                 col::bg::color(70, 70, 70).as_str(),
                                  true)
                 },
                 None => colored_text(format!("{}   ", ret).as_str(),
                                      col::NONE,
-                                     col::BG::color(70, 70, 70).as_str(),
+                                     col::bg::color(70, 70, 70).as_str(),
                                      true)
             }
         }

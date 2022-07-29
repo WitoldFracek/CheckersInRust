@@ -33,10 +33,10 @@ impl Piece {
 
     pub fn colored_marker(&self, has_end: bool) -> String {
         match self {
-            Piece::Pawn(CheckersColor::White) => col::colored_text("●", col::FG::WHITE, col::NONE, has_end),
-            Piece::Pawn(CheckersColor::Black) => col::colored_text("●", col::FG::BLACK, col::NONE, has_end),
-            Piece::Queen(CheckersColor::White) => col::colored_text("Q", col::FG::WHITE, col::NONE, has_end),
-            Piece::Queen(CheckersColor::Black) => col::colored_text("Q", col::FG::BLACK, col::NONE, has_end),
+            Piece::Pawn(CheckersColor::White) => col::colored_text("●", col::fg::WHITE, col::NONE, has_end),
+            Piece::Pawn(CheckersColor::Black) => col::colored_text("●", col::fg::BLACK, col::NONE, has_end),
+            Piece::Queen(CheckersColor::White) => col::colored_text("Q", col::fg::WHITE, col::NONE, has_end),
+            Piece::Queen(CheckersColor::Black) => col::colored_text("Q", col::fg::BLACK, col::NONE, has_end),
         }
     }
 
