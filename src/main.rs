@@ -14,14 +14,12 @@ use crate::checkers_utils::{alias_from_coordinates, MoveExecutor};
 
 fn main() {
 
-    // let mut b = Board::new(3).unwrap();
-    // let p = MoveExecutor::get_pieces(&b, CheckersColor::Black);
-    // println!("{}", b.repr());
-    // let _ = b.set_at(7, 0, Board::BLACK_QUEEN);
-    // let _ = b.set_at(0, 1, Board::WHITE_PAWN);
-    // let _ = b.set_at(0, 3, Board::WHITE_QUEEN);
-    // let _ = b.set_at(4, 3, Board::BLACK_PAWN);
-    // let _ = b.set_at(1, 2, Board::EMPTY);
-    // println!("{}", b.repr());
-    // println!("{}", b.get_at(4, 3).unwrap().unwrap());
+    let v = vec![1, 2, 3, 4, 5, 6];
+    for elem in &v[..v.len() - 1] {
+        println!("{}", elem);
+        if elem % 3 == 0 {
+            continue;
+        }
+        println!("{}", elem);
+    }
 }

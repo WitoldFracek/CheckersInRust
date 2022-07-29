@@ -91,7 +91,7 @@ impl Board {
             return Err(CheckersError::IndexOutOfBounds);
         }
         if (x + y) % 2 == 0 {
-            return Ok(None);
+            return Err(CheckersError::RuleError);
         }
         let shift = 4 * (4 * x + y / 2);
         let value = (self._board >> shift) & self._mask as u128;
@@ -117,6 +117,14 @@ impl Board {
         let mask = temp << shift;
         self._board = self._board | mask;
         Ok(())
+    }
+
+    pub fn is_empty_at(&self, x: usize, y: usize) -> Result<bool, CheckersError> {
+        match self.get_at(x, y) {
+            Ok(None) => Ok(true),
+            Err(err) => Err(err),
+            _ => Ok(false),
+        }
     }
 
     pub fn is_field_excluded(&self, x: usize, y: usize) -> Result<bool, CheckersError> {
@@ -178,6 +186,10 @@ impl Board {
 
     pub fn get_board(&self) -> u128 {
         self._board
+    }
+
+    pub fn size(&self) -> usize {
+        8
     }
 
     fn decode_piece(&self, value: u128) -> Option<Piece> {
@@ -289,7 +301,10 @@ impl <'a> Iterator for BoardIterator<'_> {
         if self.x > 7 {
             return None;
         }
-        let ret = self.board.get_at(self.x, self.y).unwrap();
+        let ret = match self.board.get_at(self.x, self.y) {
+            Ok(Some(piece)) => Some(piece),
+            _ => None,
+        };
         let cell = Cell {
             piece: ret
         };

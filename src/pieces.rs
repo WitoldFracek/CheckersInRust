@@ -39,6 +39,16 @@ impl Piece {
             Piece::Queen(CheckersColor::Black) => col::colored_text("Q", col::FG::BLACK, col::NONE, has_end),
         }
     }
+
+    pub fn color(&self) -> CheckersColor {
+        match self {
+            Piece::Pawn(CheckersColor::White) => CheckersColor::White,
+            Piece::Queen(CheckersColor::White) => CheckersColor::White,
+            Piece::Pawn(CheckersColor::Black) => CheckersColor::Black,
+            Piece::Queen(CheckersColor::Black) => CheckersColor::Black,
+
+        }
+    }
 }
 
 impl Display for Piece {

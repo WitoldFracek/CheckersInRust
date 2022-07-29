@@ -123,4 +123,13 @@ mod tests {
         board.reset_excluded_fields();
         assert_eq!(board.get_board(), 0);
     }
+
+    #[test]
+    fn is_empty_at_test() {
+        let board = Board::new(2).unwrap();
+        assert!(!board.is_empty_at(0, 1).unwrap());
+        assert!(board.is_empty_at(2, 3).unwrap());
+        assert_eq!(board.is_empty_at(10, 0), Err(CheckersError::IndexOutOfBounds));
+        assert_eq!(board.is_empty_at(2, 4), Err(CheckersError::RuleError));
+    }
 }

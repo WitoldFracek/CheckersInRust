@@ -12,6 +12,8 @@ pub struct MoveExecutor {
 }
 
 impl MoveExecutor {
+    
+    const DIRECTIONS: [(i32, i32); 4] = [(1, 1), (1, -1), (-1, 1), (-1, -1)];
 
     pub fn execute_capture(board: &Board, capture: &Vec<Jump>) -> Board {
         let mut ret = board.clone();
@@ -64,7 +66,86 @@ impl MoveExecutor {
     }
 
     // === checks ===
-    // fn can_pawn_capture(board: Board, pawn: (usize, usize), current_color: CheckersColor, excluded_cells)
+    fn can_pawn_capture(board: &Board, pawn: (usize, usize), current_color: CheckersColor) -> bool {
+        for direction in Self::DIRECTIONS {
+            if Self::is_pawn_jump_possible(board, pawn, direction, current_color) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn can_queen_capture(board: &Board, queen: (usize, usize), current_color: CheckersColor) -> bool {
+        for direction in Self::DIRECTIONS {
+
+        }
+        false
+    }
+
+    fn is_pawn_jump_possible(board: &Board, pawn: (usize, usize), direction: (i32, i32), current_color: CheckersColor) -> bool {
+        let ((x, y), (dx, dy)) = (pawn, direction);
+        if !Self::is_in_bounds(x as i32 + dx, y as i32 + dy) {
+            return false;
+        }
+        if !Self::is_in_bounds(x as i32 + 2 * dx, y as i32 + 2 * dy) {
+            return false;
+        }
+        let x_capture = (x as i32 + dx) as usize;
+        let y_capture = (y as i32 + dy) as usize;
+        if board.is_field_excluded(x_capture, y_capture).unwrap() {
+            return false;
+        }
+        if board.is_empty_at(x_capture, y_capture).unwrap() {
+            return false;
+        }
+        if board.get_at(x_capture, y_capture).unwrap().unwrap().color() == current_color {
+            return false;
+        }
+        match board.is_empty_at((x as i32 + 2 * dx) as usize, (y as i32 + 2 * dy) as usize) {
+            Ok(b) => b,
+            _ => false
+        }
+    }
+
+    fn is_queen_jump_possible(board: &Board, queen: (usize, usize), direction: (i32, i32), current_color: CheckersColor) -> bool {
+        let (dx, dy) = direction;
+        let diagonal = Self::diagonal(board, queen, direction);
+        if diagonal.len() < 2 {
+            return false;
+        }
+        for &(x_pos, y_pos) in &diagonal[..diagonal.len() - 1] {
+            if board.is_field_excluded(x_pos, y_pos).unwrap() {
+                return false;
+            }
+            if board.is_empty_at(x_pos, y_pos) {
+                continue;
+            }
+            if board.is_empty_at((x_pos + dx) as usize, (y_pos + dy) as usize).unwrap() {
+                if board.get_at(x_pos, y_pos).unwrap().unwrap().color() != current_color {
+                    return true;
+                }
+            }
+            return false;
+        }
+        false
+    }
+
+    fn is_in_bounds(x: i32, y: i32) -> bool {
+        x > 0 && x < 8 && y > 0 && y < 8
+    }
+
+    fn diagonal(board: &Board, queen: (usize, usize), direction: (i32, i32)) -> Vec<(usize, usize)> {
+        let mut ret: Vec<(usize, usize)> = Vec::new();
+        let (dx, dy) = direction;
+        let (x, y) = queen;
+        for i in 1..board.size() as i32 {
+            let (x_cal, y_cal) = (x as i32 + i * dx, y as i32 + i * dy);
+            if Self::is_in_bounds(x_cal, y_cal) {
+                ret.push((x_cal as usize, y_cal as usize));
+            }
+        }
+        ret
+    }
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
