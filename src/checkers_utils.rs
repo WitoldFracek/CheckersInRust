@@ -119,10 +119,10 @@ impl MoveExecutor {
             if board.is_field_excluded(x_pos, y_pos).unwrap() {
                 return false;
             }
-            if board.is_empty_at(x_pos, y_pos) {
+            if board.is_empty_at(x_pos, y_pos).unwrap() {
                 continue;
             }
-            if board.is_empty_at((x_pos + dx) as usize, (y_pos + dy) as usize).unwrap() {
+            if board.is_empty_at((x_pos as i32 + dx) as usize, (y_pos as i32 + dy) as usize).unwrap() {
                 if board.get_at(x_pos, y_pos).unwrap().unwrap().color() != current_color {
                     return true;
                 }
@@ -139,7 +139,7 @@ impl MoveExecutor {
         }
     }
 
-    fn can_queen_move(board: &Board, queen: (usize, usize), current_color: CheckersColor) -> boole {
+    fn can_queen_move(board: &Board, queen: (usize, usize), current_color: CheckersColor) -> bool {
         for direction in Self::DIRECTIONS {
             if Self::is_move_possible(board, queen, direction) {
                 return true;

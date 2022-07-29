@@ -8,9 +8,13 @@ mod tests {
 
     #[test]
     fn set_element_test() {
+        println!("=== Set element test ===");
         let mut board = Board::empty();
         let res1 = board.set_at(0, 1, Board::BLACK_QUEEN);
+        let res2 = board.set_at(1, 0, Board::BLACK_PAWN);
+        println!("Board with a BLACK pawn:\n{}", board.repr());
         let res2 = board.set_at(1, 0, Board::WHITE_PAWN);
+        println!("Board with a WHITE pawn:\n{}", board.repr());
         assert_eq!(board.get_board(), 0b0001_0000_0000_0000_0111);
         assert_eq!(res1, Ok(()));
         assert_eq!(res2, Ok(()));
