@@ -5,7 +5,7 @@ use std::fmt;
 use std::fmt::Formatter;
 use std::ops::{Index};
 use std::vec::IntoIter;
-use crate::{Piece, White, Black};
+use crate::{Piece, White, Black, CheckersColor};
 use crate::col;
 use crate::col::{colored_text, RGBColor};
 
@@ -19,14 +19,29 @@ impl Board {
 
     //binary = reserved : pawn(0) : white(0) : empty(0)
 
-    const EMPTY: u8 = 0b0000;
-    const WHITE_PAWN: u8 =  0b0001;
-    const WHITE_QUEEN: u8 = 0b0101;
-    const BLACK_PAWN: u8 =  0b0011;
-    const BLACK_QUEEN: u8 = 0b0111;
+    pub const EMPTY: u8 = 0b0000;
+    pub const WHITE_PAWN: u8 =  0b0001;
+    pub const WHITE_QUEEN: u8 = 0b0101;
+    pub const BLACK_PAWN: u8 =  0b0011;
+    pub const BLACK_QUEEN: u8 = 0b0111;
 }
 
 impl Board {
+
+    pub fn pieces_count(&self, color: CheckersColor) -> usize {
+        let mut counter = 0_usize;
+        for cell in self {
+            match cell.piece {
+                Some(Piece::Queen(col)) | Some(Piece::Pawn(col)) => {
+                    if col == color {
+                        counter += 1;
+                    }
+                }
+                None => {}
+            }
+        }
+        counter
+    }
 
     // temp function
     pub fn repr(&self) -> String {
@@ -71,21 +86,43 @@ impl Board {
     }
 
     pub fn get_at(&self, x: usize, y: usize) -> Result<Option<Piece>, String> {
-
         if  x > 7 || y > 7 {
             return Err(format!("Index out of bounds. Checkers board index ranges from 0 to 7. x = {}, y = {}", x, y));
         }
-
         if (x + y) % 2 == 0 {
             return Ok(None);
         }
-
         let shift = 4 * (4 * x + y / 2);
         let value = (self._board >> shift) & self._mask as u128;
         let ret = self.decode_piece(value);
         Ok(ret)
     }
 
+    pub fn set_at(&mut self, x: usize, y: usize, value: u8) -> Result<(), String> {
+        if  x > 7 || y > 7 {
+            return Err(format!("Index out of bounds. Checkers board index ranges from 0 to 7. x = {}, y = {}", x, y));
+        }
+        if (x + y) % 2 == 0 {
+            return Err(format!("Invalid operation. All pieces in the game must stay on the fields of the same color. One color is always excluded from the checkers game."));
+        }
+        match value {
+            Self::EMPTY | Self::WHITE_PAWN | Self::WHITE_QUEEN | Self::BLACK_PAWN | Self::BLACK_QUEEN => {},
+            _ => return Err(format!("Value {} (binary = {:b}) is not allowed. Allowed values are: {:b}, {:b}, {:b}, {:b}, {:b}",
+                             value, value,
+                             Self::EMPTY,
+                             Self::WHITE_PAWN,
+                             Self::WHITE_QUEEN,
+                             Self::BLACK_PAWN,
+                             Self::BLACK_QUEEN)),
+        }
+        let shift = x as u128 * 16_u128 + (y / 2) as u128 * 4_u128;
+        let remove_mask = 0b1111_u128 << shift;
+        self._board = self._board & !remove_mask;
+        let temp = value as u128;
+        let mask = temp << shift;
+        self._board = self._board | mask;
+        Ok(())
+    }
     // pub fn repr(&self) -> String {
     //     let mut ret = String::from("   A  B  C  D  E  F  G  H \n");
     //     for i in 0..8 {
@@ -226,7 +263,7 @@ impl <'a> Iterator for BoardIterator<'_> {
 }
 
 pub struct Cell {
-    piece: Option<Piece>
+    pub piece: Option<Piece>
 }
 
 impl Cell {

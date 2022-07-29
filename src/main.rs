@@ -2,29 +2,24 @@ mod colors;
 mod pieces;
 mod board;
 mod checkers_utils;
+mod moves;
 
 use colors::colors as col;
 use pieces::{Piece, CheckersColor};
 use crate::board::Board;
 use crate::CheckersColor::{White, Black};
 use crate::Piece::{Pawn, Queen};
-use crate::checkers_utils::alias_from_coordinates;
+use crate::checkers_utils::{alias_from_coordinates, MoveExecutor};
 
 fn main() {
-    // for cell in Board::test().into_iter() {
-    //     println!("{}", cell);
-    // }
-    let board = Board::new(2).unwrap();
-    println!("{}", board.repr());
-    match board.get_at(0, 0).unwrap() {
-        Some(piece) => println!("{}", piece),
-        None => {}
-    };
 
-    println!("{}", alias_from_coordinates(0, 0));
-
-    // println!("{}", Board::new(1).unwrap().repr());
-
-    // println!("{}Witek{}", col::FG::color(147, 1, 211), col::END);
-    // println!("{}Witek{}", col::BG::color(147, 1, 211), col::END);
+    let mut b = Board::new(3).unwrap();
+    let p = MoveExecutor::get_pieces(&b, CheckersColor::Black);
+    println!("{}", b.repr());
+    let _ = b.set_at(7, 0, Board::BLACK_QUEEN);
+    let _ = b.set_at(0, 1, Board::WHITE_PAWN);
+    let _ = b.set_at(0, 3, Board::WHITE_QUEEN);
+    let _ = b.set_at(4, 3, Board::BLACK_PAWN);
+    println!("{}", b.repr());
+    println!("{}", b.get_at(4, 3).unwrap().unwrap());
 }
