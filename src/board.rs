@@ -221,10 +221,10 @@ impl Board {
         }
     }
 
-    pub fn new(pawn_rows: usize) -> Result<Board, String> {
+    pub fn new(pawn_rows: usize) -> Result<Board, CheckersError> {
         match pawn_rows {
-            0 => return  Err("Cannot have 0 rows".to_string()),
-            4..=usize::MAX => return Err(format!("Too many rows. 3 is the maximum of rows per player. Got {}", pawn_rows)),
+            0 => return  Err(CheckersError::RuleError),
+            4..=usize::MAX => return Err(CheckersError::RuleError),
             _ => {}
         };
 

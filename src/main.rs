@@ -24,5 +24,10 @@ fn main() {
         ["", "", "", "", "", "", "", ""],
     ]);
 
+    let a = 3_usize;
+    let d = 1;
+    let p = a - 2 * d;
+    println!("{}", p);
+
     println!("{}", b.repr());
 }

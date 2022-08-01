@@ -1,5 +1,6 @@
+use std::cmp::max;
 use crate::{Board, CheckersColor, Piece};
-use crate::moves::{Jump, SimpleMove};
+use crate::moves::{Jump, Move, SimpleMove};
 
 pub fn alias_from_coordinates(x: usize, y: usize) -> String {
     let letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -62,6 +63,166 @@ impl MoveExecutor {
             counter += 1;
         }
         coordinates
+    }
+
+    fn get_capturing_pieces(board: &Board, pieces: Vec<(usize, usize)>, color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
+        let mut cap_pawns = Vec::new();
+        let mut cap_queens = Vec::new();
+        for (x, y) in pieces {
+            match board.get_at(x, y).unwrap() {
+                None => {}
+                Some(Piece::Pawn(_)) => {
+                    if Self::can_pawn_capture(board, (x, y), color) {
+                        cap_pawns.push((x, y));
+                    }
+                },
+                Some(Piece::Queen(_)) => {
+                    if Self::can_queen_capture(board, (x, y), color) {
+                        cap_queens.push((x, y));
+                    }
+                }
+            }
+        }
+        (cap_pawns, cap_queens)
+    }
+
+    fn get_moving_pieces(board: &Board, pieces: Vec<(usize, usize)>, color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
+        let mut mov_pawns = Vec::new();
+        let mut mov_queens = Vec::new();
+        for (x, y) in pieces {
+            match board.get_at(x, y).unwrap() {
+                None => {}
+                Some(Piece::Pawn(_)) => {
+                    if Self::can_pawn_move(board, (x, y), color) {
+                        mov_pawns.push((x, y));
+                    }
+                }
+                Some(Piece::Queen(_)) => {
+                    if Self::can_queen_move(board, (x, y), color) {
+                        mov_queens.push((x, y));
+                    }
+                }
+            }
+        }
+        (mov_pawns, mov_queens)
+    }
+
+    fn get_possible_pawn_captures(board: &Board, capturing_pawns: Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
+        let mut paths = Vec::new();
+        for (x, y) in capturing_pawns {
+            let mut board_copy = board.clone();
+            let _ = board_copy.set_at(x, y, Board::EMPTY);
+            let mut pawn_path = Vec::new();
+            Self::get_pawn_capture_path(board, (x, y), color, &mut Vec::new(), &mut pawn_path);
+            paths.append(&mut pawn_path);
+        }
+        if paths.is_empty() {
+            return paths;
+        }
+        let max_len = paths.iter().map(|v| v.len()).max().unwrap();
+        paths.retain(|v| v.len() == max_len);
+        paths
+    }
+
+    fn get_pawn_capture_path(board: &Board, pawn: (usize, usize), color: CheckersColor, acc: &mut Vec<Jump>, solutions: &mut Vec<Vec<Jump>>) {
+        if Self::can_pawn_capture(board, pawn, color) {
+            let directions = Self::get_pawn_capture_directions(board, pawn, color);
+            for (dx, dy) in directions {
+                let (x_start, y_start) = pawn;
+                let jump = Jump {
+                    x_start,
+                    y_start,
+                    x_end: (x_start as i32 + 2 * dx) as usize,
+                    y_end: (y_start as i32 + 2 * dx) as usize,
+                    x_capture: (x_start as i32 + dx) as usize,
+                    y_capture: (y_start as i32 + dx) as usize,
+                };
+                acc.push(jump);
+                let mut board_copy = board.clone();
+                let _ = board_copy.set_field_excluded(jump.x_capture, jump.y_capture);
+                Self::get_pawn_capture_path(&board_copy, jump.end_pair(), color, &mut acc.to_vec(), solutions)
+            }
+        } else {
+            solutions.push(acc.to_vec());
+        }
+    }
+
+    fn get_pawn_capture_directions(board: &Board, pawn: (usize, usize), color: CheckersColor) -> Vec<(i32, i32)> {
+        let mut ret = Vec::new();
+        for direction in Self::DIRECTIONS {
+            if Self::is_pawn_jump_possible(board, pawn, direction, color) {
+                ret.push(direction);
+            }
+        }
+        ret
+    }
+
+    fn get_possible_queen_captures(board: &Board, capturing_queens: Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
+        let mut paths = Vec::new();
+        for (x, y) in capturing_queens {
+            let mut board_copy = board.clone();
+            let _ = board_copy.set_at(x, y, Board::EMPTY);
+            let mut queen_path = Vec::new();
+            Self::get_queen_capture_path(board, queen, color, &mut Vec::new(), &mut queen_path);
+            paths.append(&mut queen_path);
+        }
+        if paths.is_empty() {
+            return paths;
+        }
+        let max_len = paths.iter().map(|v| v.len()).max().unwrap();
+        paths.retain(|v| v.len() == max_len);
+        paths
+    }
+
+    fn get_queen_capture_path(board: &Board, queen: (usize, usize), color: CheckersColor, acc: &mut Vec<Jump>, solutions: &mut Vec<Vec<Jump>>) {
+        if Self::can_queen_capture(board, queen, color) {
+            let landing_spots = Self::get_queen_landing_spots(board, queen, color);
+            for jump in landing_spots {
+                let x_enemy = jump.x_capture;
+                let y_enemy = jump.y_capture;
+                let mut board_copy = board.clone();
+                let _ = board_copy.set_field_excluded(x_enemy, y_enemy);
+                let mut acc_copy = acc.to_vec();
+                acc_copy.push(jump);
+                Self::get_queen_capture_path(board, jump.end_pair(), color, &mut acc_copy, solutions);
+            }
+        } else {
+            solutions.push(acc.to_vec());
+        }
+    }
+
+    fn get_queen_landing_spots(board: &Board, queen: (usize, usize), color: CheckersColor) -> Vec<Jump> {
+        let mut landing_spots = Vec::new();
+        let (x, y) = queen;
+        for direction in Self::DIRECTIONS {
+            let diagonal = Self::diagonal(board, queen, direction);
+            let mut enemy_index = -1;
+            let mut obstacle_index = -1;
+            for (i, &(x_pos, y_pos)) in diagonal.iter().enumerate() {
+                if obstacle_index != -1 {
+                    break;
+                }
+                if board.is_field_excluded(x_pos, y_pos).unwrap() {
+                    continue;
+                }
+                if !board.is_empty_at(x_pos, y_pos).unwrap() {
+                    let piece = board.get_at(x_pos, y_pos).unwrap().unwrap();
+                    if piece.color() != color {
+                        if enemy_index != -1 {
+                            enemy_index = i;
+                        } else {
+                            obstacle_index = i;
+                        }
+                    } else {
+                        obstacle_index = i;
+                    }
+                } else if enemy_index != -1 {
+                    let (ex, ey) = diagonal[enemy_index];
+                    landing_spots.push(Jump::new(x, y, x_pos, y_pos, ex, ey));
+                }
+            }
+        }
+        landing_spots
     }
 
     // === checks ===

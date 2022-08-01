@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use crate::Board;
 use crate::col::RGBColor;
 use crate::colors::colors as col;
 
@@ -47,6 +48,15 @@ impl Piece {
             Piece::Pawn(CheckersColor::Black) => CheckersColor::Black,
             Piece::Queen(CheckersColor::Black) => CheckersColor::Black,
 
+        }
+    }
+
+    pub fn board_u8_representation(&self) -> u8 {
+        match self {
+            Piece::Pawn(CheckersColor::White) => Board::WHITE_PAWN,
+            Piece::Queen(CheckersColor::White) => Board::WHITE_QUEEN,
+            Piece::Pawn(CheckersColor::Black) => Board::BLACK_PAWN,
+            Piece::Queen(CheckersColor::Black) => Board::BLACK_QUEEN,
         }
     }
 }
