@@ -260,6 +260,23 @@ impl Board {
 
         return Ok(ret)
     }
+
+    pub fn from_mockup(mockup: [[&str; 8]; 8]) -> Board {
+        let mut ret = Board::empty();
+        for (i, row) in mockup.iter().enumerate() {
+            for (j, symbol) in row.iter().enumerate() {
+                let piece = match symbol.to_uppercase().as_str() {
+                    "WP" => Self::WHITE_PAWN,
+                    "WQ" => Self::WHITE_QUEEN,
+                    "BP" => Self::BLACK_PAWN,
+                    "BQ" => Self::BLACK_QUEEN,
+                    _ => Self::EMPTY
+                };
+                let _ = ret.set_at(i, j, piece);
+            }
+        }
+        ret
+    }
 }
 
 impl Default for Board {

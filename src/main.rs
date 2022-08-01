@@ -14,12 +14,15 @@ use crate::checkers_utils::{alias_from_coordinates, MoveExecutor};
 
 fn main() {
 
-    let v = vec![1, 2, 3, 4, 5, 6];
-    for elem in &v[..v.len() - 1] {
-        println!("{}", elem);
-        if elem % 3 == 0 {
-            continue;
-        }
-        println!("{}", elem);
-    }
+    let b = Board::from_mockup([["", "WP", "", "BQ", "", "", "BQ", "WQ"],
+        ["WQ", "", "", "BP", "", "BQ", "WQ", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+    ]);
+
+    println!("{}", b.repr());
 }

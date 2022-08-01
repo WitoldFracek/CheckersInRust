@@ -61,7 +61,6 @@ impl MoveExecutor {
             }
             counter += 1;
         }
-
         coordinates
     }
 
