@@ -1,4 +1,5 @@
 use std::cmp::max;
+use std::future::pending;
 use crate::{Board, CheckersColor, Piece};
 use crate::moves::{Jump, Move, SimpleMove};
 
@@ -48,7 +49,7 @@ impl MoveExecutor {
         }
     }
 
-    fn get_pieces(board: &Board, color: CheckersColor) -> Vec<(usize, usize)> {
+    pub fn get_pieces(board: &Board, color: CheckersColor) -> Vec<(usize, usize)> {
         let mut coordinates: Vec<(usize, usize)> = Vec::new();
         let mut counter = 0;
         for cell in board {
@@ -65,7 +66,7 @@ impl MoveExecutor {
         coordinates
     }
 
-    fn get_capturing_pieces(board: &Board, pieces: Vec<(usize, usize)>, color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
+    pub fn get_capturing_pieces(board: &Board, pieces: Vec<(usize, usize)>, color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
         let mut cap_pawns = Vec::new();
         let mut cap_queens = Vec::new();
         for (x, y) in pieces {
@@ -107,11 +108,22 @@ impl MoveExecutor {
         (mov_pawns, mov_queens)
     }
 
-    fn get_possible_pawn_captures(board: &Board, capturing_pawns: Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
+    fn get_all_captures(board: &Board, color: CheckersColor) -> Vec<Vec<Jump>> {
+        let pieces = Self::get_pieces(board, color);
+        let (capturing_pawns, capturing_queens) = Self::get_capturing_pieces(board, pieces, color);
+        let mut pawn_captures = Self::get_possible_pawn_captures(board, capturing_pawns, color);
+        let mut queen_captures = Self::get_possible_queen_captures(board, capturing_queens, color);
+        let mut all_captures = Vec::new();
+        all_captures.append(&mut pawn_captures);
+        all_captures.append(&mut queen_captures);
+        all_captures
+    }
+
+    pub fn get_possible_pawn_captures(board: &Board, capturing_pawns: Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
         let mut paths = Vec::new();
         for (x, y) in capturing_pawns {
             let mut board_copy = board.clone();
-            let _ = board_copy.set_at(x, y, Board::EMPTY);
+            board_copy.set_at(x, y, Board::EMPTY).unwrap();
             let mut pawn_path = Vec::new();
             Self::get_pawn_capture_path(board, (x, y), color, &mut Vec::new(), &mut pawn_path);
             paths.append(&mut pawn_path);
@@ -157,13 +169,14 @@ impl MoveExecutor {
         ret
     }
 
-    fn get_possible_queen_captures(board: &Board, capturing_queens: Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
+    pub fn get_possible_queen_captures(board: &Board, capturing_queens: Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
         let mut paths = Vec::new();
         for (x, y) in capturing_queens {
             let mut board_copy = board.clone();
             let _ = board_copy.set_at(x, y, Board::EMPTY);
             let mut queen_path = Vec::new();
-            Self::get_queen_capture_path(board, queen, color, &mut Vec::new(), &mut queen_path);
+            Self::get_queen_capture_path(board, (x, y), color, &mut Vec::new(), &mut queen_path);
+            // println!("Q path: {:?}", queen_path);
             paths.append(&mut queen_path);
         }
         if paths.is_empty() {
@@ -177,15 +190,17 @@ impl MoveExecutor {
     fn get_queen_capture_path(board: &Board, queen: (usize, usize), color: CheckersColor, acc: &mut Vec<Jump>, solutions: &mut Vec<Vec<Jump>>) {
         if Self::can_queen_capture(board, queen, color) {
             let landing_spots = Self::get_queen_landing_spots(board, queen, color);
-            for jump in landing_spots {
-                let x_enemy = jump.x_capture;
-                let y_enemy = jump.y_capture;
-                let mut board_copy = board.clone();
-                let _ = board_copy.set_field_excluded(x_enemy, y_enemy);
-                let mut acc_copy = acc.to_vec();
-                acc_copy.push(jump);
-                Self::get_queen_capture_path(board, jump.end_pair(), color, &mut acc_copy, solutions);
-            }
+            return
+            // for jump in landing_spots {
+            //     let x_enemy = jump.x_capture;
+            //     let y_enemy = jump.y_capture;
+            //     let mut board_copy = board.clone();
+            //     let _ = board_copy.set_field_excluded(x_enemy, y_enemy);
+            //     let mut acc_copy = acc.to_vec();
+            //     println!("{:?}", acc_copy);
+            //     acc_copy.push(jump);
+            //     Self::get_queen_capture_path(&board_copy, jump.end_pair(), color, &mut acc_copy, solutions);
+            // }
         } else {
             solutions.push(acc.to_vec());
         }
@@ -196,8 +211,8 @@ impl MoveExecutor {
         let (x, y) = queen;
         for direction in Self::DIRECTIONS {
             let diagonal = Self::diagonal(board, queen, direction);
-            let mut enemy_index = -1;
-            let mut obstacle_index = -1;
+            let mut enemy_index = -1_i32;
+            let mut obstacle_index = -1_i32;
             for (i, &(x_pos, y_pos)) in diagonal.iter().enumerate() {
                 if obstacle_index != -1 {
                     break;
@@ -208,21 +223,27 @@ impl MoveExecutor {
                 if !board.is_empty_at(x_pos, y_pos).unwrap() {
                     let piece = board.get_at(x_pos, y_pos).unwrap().unwrap();
                     if piece.color() != color {
-                        if enemy_index != -1 {
-                            enemy_index = i;
+                        if enemy_index == -1 {
+                            enemy_index = i as i32;
                         } else {
-                            obstacle_index = i;
+                            obstacle_index = i as i32;
                         }
                     } else {
-                        obstacle_index = i;
+                        obstacle_index = i as i32;
                     }
                 } else if enemy_index != -1 {
-                    let (ex, ey) = diagonal[enemy_index];
+                    let (ex, ey) = diagonal[enemy_index as usize];
                     landing_spots.push(Jump::new(x, y, x_pos, y_pos, ex, ey));
                 }
             }
         }
         landing_spots
+    }
+
+    fn get_all_moves(board: &Board, color: CheckersColor) -> Vec<SimpleMove> {
+        let pieces = Self::get_pieces(board, color);
+        let (moving_pawns, moving_queens) = Self::get_moving_pieces(board, pieces, color);
+        Vec::new()
     }
 
     // === checks ===
@@ -319,7 +340,7 @@ impl MoveExecutor {
     }
 
     fn is_in_bounds(x: i32, y: i32) -> bool {
-        x > 0 && x < 8 && y > 0 && y < 8
+        x >= 0 && x < 8 && y >= 0 && y < 8
     }
 
     fn diagonal(board: &Board, queen: (usize, usize), direction: (i32, i32)) -> Vec<(usize, usize)> {

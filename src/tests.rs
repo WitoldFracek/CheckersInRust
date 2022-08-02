@@ -135,4 +135,72 @@ mod tests {
         assert_eq!(board.is_empty_at(10, 0), Err(CheckersError::IndexOutOfBounds));
         assert_eq!(board.is_empty_at(2, 4), Err(CheckersError::RuleError));
     }
+
+    #[test]
+    fn get_pieces_test() {
+        let board = Board::from_mockup([
+            ["", "BP", "", "BP", "", "BP", "", ""],
+            ["WP", "", "WP", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "BQ", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""]]);
+        let pieces = MoveExecutor::get_pieces(&board, CheckersColor::Black);
+        let res: Vec<(usize, usize)> = vec![(0, 1), (0, 3), (0, 5), (6, 3)];
+        for piece in pieces {
+            assert!(res.contains(&piece));
+        }
+
+        let pieces = MoveExecutor::get_pieces(&board, CheckersColor::White);
+        let res: Vec<(usize, usize)> = vec![(1, 0), (1, 2)];
+        for piece in pieces {
+            assert!(res.contains(&piece));
+        }
+    }
+
+    #[test]
+    fn get_capturing_pieces_test() {
+        let board = Board::from_mockup([
+            ["  ", "BP", "  ", "BP", "  ", "BP", "  ", "  "],
+            ["WP", "  ", "WP", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "WQ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "BQ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "]]);
+        let pieces = MoveExecutor::get_pieces(&board, CheckersColor::Black);
+        let (cap_p, cap_q) = MoveExecutor::get_capturing_pieces(&board, pieces, CheckersColor::Black);
+        let p_res: Vec<(usize, usize)> = vec![(0, 1), (0, 3)];
+        let q_res: Vec<(usize, usize)> = vec![(6, 3)];
+        for pawn in cap_p {
+            assert!(p_res.contains(&pawn));
+        }
+        for queen in cap_q {
+            assert!(q_res.contains(&queen));
+        }
+    }
+
+    #[test]
+    fn queen_multiple_capture_test() {
+         let mut board = Board::from_mockup([
+            ["  ", "  ", "  ", "WQ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "BP", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "BP", "  ", "  "],
+            ["  ", "  ", "BP", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "BP", "  "],
+            ["  ", "  ", "  ", "BP", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "]]);
+        println!("Before capturing:\n{}", board.repr());
+        let pieces = MoveExecutor::get_pieces(&board, CheckersColor::White);
+        let (_, cq) = MoveExecutor::get_capturing_pieces(&board, pieces, CheckersColor::White);
+        println!("Cap Q: {:?}", cq);
+        let poss_cap = MoveExecutor::get_possible_queen_captures(&board, cq, CheckersColor::White);
+        println!("Pos cap: {:?}", poss_cap);
+        board = MoveExecutor::execute_capture(&board, poss_cap.first().unwrap());
+        println!("After capture:\n{}", board.repr());
+    }
 }

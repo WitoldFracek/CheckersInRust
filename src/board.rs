@@ -131,7 +131,7 @@ impl Board {
             return Err(CheckersError::RuleError);
         }
         let shift = x as u128 * 16_u128 + (y / 2) as u128 * 4_u128;
-        Ok((self._board >> shift) & 0b10000 == 0b10000)
+        Ok((self._board >> shift) & 0b1000 == 0b1000)
     }
 
     pub fn set_field_excluded(&mut self, x: usize, y: usize) -> Result<(), CheckersError> {
@@ -276,6 +276,11 @@ impl Board {
             }
         }
         ret
+    }
+
+    pub fn bit_repr(&self, x: usize, y: usize) -> String {
+        let shift = x as u128 * 16_u128 + (y / 2) as u128 * 4_u128;
+        format!("{:b}", self._board >> shift & 0b1111)
     }
 }
 
