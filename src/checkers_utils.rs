@@ -176,7 +176,6 @@ impl MoveExecutor {
             let _ = board_copy.set_at(x, y, Board::EMPTY);
             let mut queen_path = Vec::new();
             Self::get_queen_capture_path(board, (x, y), color, &mut Vec::new(), &mut queen_path);
-            // println!("Q path: {:?}", queen_path);
             paths.append(&mut queen_path);
         }
         if paths.is_empty() {
@@ -190,17 +189,15 @@ impl MoveExecutor {
     fn get_queen_capture_path(board: &Board, queen: (usize, usize), color: CheckersColor, acc: &mut Vec<Jump>, solutions: &mut Vec<Vec<Jump>>) {
         if Self::can_queen_capture(board, queen, color) {
             let landing_spots = Self::get_queen_landing_spots(board, queen, color);
-            return
-            // for jump in landing_spots {
-            //     let x_enemy = jump.x_capture;
-            //     let y_enemy = jump.y_capture;
-            //     let mut board_copy = board.clone();
-            //     let _ = board_copy.set_field_excluded(x_enemy, y_enemy);
-            //     let mut acc_copy = acc.to_vec();
-            //     println!("{:?}", acc_copy);
-            //     acc_copy.push(jump);
-            //     Self::get_queen_capture_path(&board_copy, jump.end_pair(), color, &mut acc_copy, solutions);
-            // }
+            for jump in landing_spots {
+                let x_enemy = jump.x_capture;
+                let y_enemy = jump.y_capture;
+                let mut board_copy = board.clone();
+                let _ = board_copy.set_field_excluded(x_enemy, y_enemy);
+                let mut acc_copy = acc.to_vec();
+                acc_copy.push(jump);
+                Self::get_queen_capture_path(&board_copy, jump.end_pair(), color, &mut acc_copy, solutions);
+            }
         } else {
             solutions.push(acc.to_vec());
         }

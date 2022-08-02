@@ -190,17 +190,25 @@ mod tests {
             ["  ", "  ", "BP", "  ", "  ", "  ", "  ", "  "],
             ["  ", "  ", "  ", "  ", "  ", "BP", "  ", "  "],
             ["  ", "  ", "BP", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "BP", "  ", "  ", "  ", "  ", "  ", "  "],
             ["  ", "  ", "  ", "  ", "  ", "  ", "BP", "  "],
             ["  ", "  ", "  ", "BP", "  ", "  ", "  ", "  "],
             ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "]]);
         println!("Before capturing:\n{}", board.repr());
         let pieces = MoveExecutor::get_pieces(&board, CheckersColor::White);
         let (_, cq) = MoveExecutor::get_capturing_pieces(&board, pieces, CheckersColor::White);
-        println!("Cap Q: {:?}", cq);
         let poss_cap = MoveExecutor::get_possible_queen_captures(&board, cq, CheckersColor::White);
-        println!("Pos cap: {:?}", poss_cap);
         board = MoveExecutor::execute_capture(&board, poss_cap.first().unwrap());
         println!("After capture:\n{}", board.repr());
+        let comp_board = Board::from_mockup([
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "WQ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "BP", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "]]);
+        assert_eq!(comp_board.get_board(), board.get_board());
     }
 }
