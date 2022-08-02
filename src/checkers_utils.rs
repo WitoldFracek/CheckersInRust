@@ -1,5 +1,6 @@
 use std::cmp::max;
 use std::future::pending;
+use itertools::all;
 use crate::{Board, CheckersColor, Piece};
 use crate::moves::{Jump, Move, SimpleMove};
 
@@ -237,10 +238,93 @@ impl MoveExecutor {
         landing_spots
     }
 
-    fn get_all_moves(board: &Board, color: CheckersColor) -> Vec<SimpleMove> {
+    pub fn get_all_moves(board: &Board, color: CheckersColor) -> Vec<SimpleMove> {
         let pieces = Self::get_pieces(board, color);
         let (moving_pawns, moving_queens) = Self::get_moving_pieces(board, pieces, color);
-        Vec::new()
+        let mut pawn_moves = Self::get_possible_pawn_moves(board, &moving_pawns, color);
+        let mut queen_moves = Self::get_possible_queen_moves(board, &moving_queens);
+        let mut all_moves = Vec::new();
+        all_moves.append(&mut pawn_moves);
+        all_moves.append(&mut queen_moves);
+        all_moves
+    }
+
+    fn get_possible_pawn_moves(board: &Board, moving_pawns: &Vec<(usize, usize)>, color: CheckersColor) -> Vec<SimpleMove> {
+        let mut moves = Vec::new();
+        for &pawn in moving_pawns {
+            let mut path = Self::get_pawn_move_path(board, pawn, color);
+            moves.append(&mut path);
+        }
+        moves
+    }
+
+    fn get_pawn_move_path(board: &Board, pawn: (usize, usize), color: CheckersColor) -> Vec<SimpleMove> {
+        let mut moves = Vec::new();
+        let (x, y) = pawn;
+        match color {
+            CheckersColor::White => {
+                if Self::is_move_possible(board, pawn, (-1, -1)) {
+                    moves.push(SimpleMove::new(x, y, x - 1, y - 1));
+                }
+                if Self::is_move_possible(board, pawn, (-1, 1)) {
+                    moves.push(SimpleMove::new(x, y, x - 1, y + 1));
+                }
+            }
+            CheckersColor::Black => {
+                if Self::is_move_possible(board, pawn, (1, 1)) {
+                    moves.push(SimpleMove::new(x, y, x + 1, y + 1));
+                }
+                if Self::is_move_possible(board, pawn, (1, -1)) {
+                    moves.push(SimpleMove::new(x, y, x + 1, y - 1));
+                }
+            }
+        }
+        moves
+    }
+
+    fn get_possible_queen_moves(board: &Board, moving_queens: &Vec<(usize, usize)>) -> Vec<SimpleMove> {
+        let mut moves = Vec::new();
+        for &queen in moving_queens {
+            let mut path = Self::get_queen_move_path(board, queen);
+            moves.append(&mut path);
+        }
+        moves
+    }
+
+    fn get_queen_move_path(board: &Board, queen: (usize, usize)) -> Vec<SimpleMove> {
+        let mut moves = Vec::new();
+        let (x, y) = queen;
+        for direction in Self::DIRECTIONS {
+            let diagonal = Self::diagonal(board, queen, direction);
+            let mut obstacle_found = false;
+            for (x_pos, y_pos) in diagonal {
+                if !obstacle_found {
+                    if board.is_empty_at(x_pos, y_pos).unwrap() {
+                        moves.push(SimpleMove::new(x, y, x_pos, y_pos));
+                    } else {
+                        obstacle_found = true;
+                    }
+                }
+            }
+        }
+        moves
+    }
+
+    fn get_longest_captures(capturing_pieces: &mut Vec<Vec<Jump>>, capturing_queens: &mut Vec<Vec<Jumsp>>) -> Vec<Vec<Jump>> {
+        let mut all_captures = Vec::new();
+        all_captures.append(capturing_pieces);
+        all_captures.append(capturing_queens);
+        if all_captures.is_empty() {
+            return Vec::new();
+        }
+        let max_len = all_captures.iter().map(|v| v.len()).max().unwrap();
+        let mut max_path = Vec::new();
+        for cap in all_captures {
+            if cap.len() == max_len {
+                max_path.push(cap)
+            }
+        }
+        max_path
     }
 
     // === checks ===
@@ -339,6 +423,8 @@ impl MoveExecutor {
     fn is_in_bounds(x: i32, y: i32) -> bool {
         x >= 0 && x < 8 && y >= 0 && y < 8
     }
+
+    // Utils
 
     fn diagonal(board: &Board, queen: (usize, usize), direction: (i32, i32)) -> Vec<(usize, usize)> {
         let mut ret: Vec<(usize, usize)> = Vec::new();

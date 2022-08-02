@@ -1,9 +1,10 @@
 
 #[cfg(test)]
 mod tests {
+    use itertools::Itertools;
     use crate::{Board, CheckersColor, MoveExecutor, Piece};
     use crate::checkers_utils::CheckersError;
-    use crate::moves::{Jump, SimpleMove};
+    use crate::moves::{Jump, Move, SimpleMove};
 
     #[test]
     fn set_element_test() {
@@ -210,5 +211,43 @@ mod tests {
             ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
             ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "]]);
         assert_eq!(comp_board.get_board(), board.get_board());
+    }
+
+    #[test]
+    fn get_all_pawn_moves_test() {
+        println!("Checking basic pawns...");
+        let board = Board::new(2).unwrap();
+        let possible_moves: Vec<(usize, usize)> = MoveExecutor::get_all_moves(&board, CheckersColor::Black)
+            .iter()
+            .map(|m| m.end_pair())
+            .unique()
+            .collect();
+        let res = vec![(2, 1), (2, 3), (2, 5), (2, 7)];
+        assert_eq!(&res.len(), &possible_moves.len());
+        for pos_mov in possible_moves {
+            assert!(res.contains(&pos_mov));
+        }
+
+        println!("Checking queens...");
+        let board = Board::from_mockup([
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "WQ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "WP", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "WP"],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "]]);
+        println!("Base setup:\n{}", board.repr());
+        let possible_moves: Vec<(usize, usize)> = MoveExecutor::get_all_moves(&board, CheckersColor::White)
+            .iter()
+            .map(|m| m.end_pair())
+            .unique()
+            .collect();
+        let res = vec![(2, 1), (2, 3), (3, 6), (0, 3), (0, 5), (2, 5)];
+        assert_eq!(&res.len(), &possible_moves.len());
+        for pos_mov in possible_moves {
+            assert!(res.contains(&pos_mov));
+        }
     }
 }
