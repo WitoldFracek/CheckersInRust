@@ -173,7 +173,7 @@ mod tests {
             ["  ", "  ", "  ", "BQ", "  ", "  ", "  ", "  "],
             ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "]]);
         let pieces = MoveExecutor::get_pieces(&board, CheckersColor::Black);
-        let (cap_p, cap_q) = MoveExecutor::get_capturing_pieces(&board, pieces, CheckersColor::Black);
+        let (cap_p, cap_q) = MoveExecutor::get_capturing_pieces(&board, &pieces, CheckersColor::Black);
         let p_res: Vec<(usize, usize)> = vec![(0, 1), (0, 3)];
         let q_res: Vec<(usize, usize)> = vec![(6, 3)];
         for pawn in cap_p {
@@ -197,7 +197,7 @@ mod tests {
             ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "]]);
         println!("Before capturing:\n{}", board.repr());
         let pieces = MoveExecutor::get_pieces(&board, CheckersColor::White);
-        let (_, cq) = MoveExecutor::get_capturing_pieces(&board, pieces, CheckersColor::White);
+        let (_, cq) = MoveExecutor::get_capturing_pieces(&board, &pieces, CheckersColor::White);
         let poss_cap = MoveExecutor::get_possible_queen_captures(&board, cq, CheckersColor::White);
         board = MoveExecutor::execute_capture(&board, poss_cap.first().unwrap());
         println!("After capture:\n{}", board.repr());
@@ -249,5 +249,31 @@ mod tests {
         for pos_mov in possible_moves {
             assert!(res.contains(&pos_mov));
         }
+    }
+
+    #[test]
+    fn promote_to_queen_test() {
+        let mut board = Board::from_mockup([
+            ["  ", "  ", "  ", "  ", "  ", "WP", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "WP", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "BP", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["BP", "  ", "BP", "  ", "  ", "  ", "  ", "  "]]);
+        println!("Board setup:\n{}", board.repr());
+        board = MoveExecutor::promote_to_queen(&board);
+        println!("Post move:\n{}", board.repr());
+        let board_cmp = Board::from_mockup([
+            ["  ", "  ", "  ", "  ", "  ", "WQ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "WP", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "BP", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["BQ", "  ", "BQ", "  ", "  ", "  ", "  ", "  "]]);
+        assert_eq!(board_cmp.get_board(), board.get_board());
     }
 }

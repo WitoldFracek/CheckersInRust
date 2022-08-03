@@ -154,28 +154,6 @@ impl Board {
             self._board = self._board & !mask;
         }
     }
-
-    // pub fn repr(&self) -> String {
-    //     let mut ret = String::from("   A  B  C  D  E  F  G  H \n");
-    //     for i in 0..8 {
-    //         ret = format!("{}{} ", ret, 8 - i);
-    //         for j in 0..8 {
-    //             if (i + j) % 2 != 0 {
-    //                 let colored = colored_text("   ", col::NONE, col::BG::WHITE);
-    //                 ret = format!("{}{}", ret, colored);
-    //             }
-    //             else {
-    //                 match self[(i as usize, j as usize)] {
-    //                     Some(piece) => ret = format!("{} {} ",ret, piece.marker()),
-    //                     None => ret = format!("{}   ", ret)
-    //                 }
-    //             }
-    //         }
-    //         ret = format!("{} {}\n", ret, 8 - i);
-    //     }
-    //     ret = format!("{}   A  B  C  D  E  F  G  H \n", ret);
-    //     return ret;
-    // }
 }
 
 impl Board {

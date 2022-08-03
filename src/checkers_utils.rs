@@ -67,10 +67,10 @@ impl MoveExecutor {
         coordinates
     }
 
-    pub fn get_capturing_pieces(board: &Board, pieces: Vec<(usize, usize)>, color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
+    pub fn get_capturing_pieces(board: &Board, pieces: &Vec<(usize, usize)>, color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
         let mut cap_pawns = Vec::new();
         let mut cap_queens = Vec::new();
-        for (x, y) in pieces {
+        for &(x, y) in pieces {
             match board.get_at(x, y).unwrap() {
                 None => {}
                 Some(Piece::Pawn(_)) => {
@@ -88,10 +88,10 @@ impl MoveExecutor {
         (cap_pawns, cap_queens)
     }
 
-    fn get_moving_pieces(board: &Board, pieces: Vec<(usize, usize)>, color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
+    fn get_moving_pieces(board: &Board, pieces: &Vec<(usize, usize)>, color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
         let mut mov_pawns = Vec::new();
         let mut mov_queens = Vec::new();
-        for (x, y) in pieces {
+        for &(x, y) in pieces {
             match board.get_at(x, y).unwrap() {
                 None => {}
                 Some(Piece::Pawn(_)) => {
@@ -111,7 +111,7 @@ impl MoveExecutor {
 
     fn get_all_captures(board: &Board, color: CheckersColor) -> Vec<Vec<Jump>> {
         let pieces = Self::get_pieces(board, color);
-        let (capturing_pawns, capturing_queens) = Self::get_capturing_pieces(board, pieces, color);
+        let (capturing_pawns, capturing_queens) = Self::get_capturing_pieces(board, &pieces, color);
         let mut pawn_captures = Self::get_possible_pawn_captures(board, capturing_pawns, color);
         let mut queen_captures = Self::get_possible_queen_captures(board, capturing_queens, color);
         let mut all_captures = Vec::new();
@@ -240,7 +240,7 @@ impl MoveExecutor {
 
     pub fn get_all_moves(board: &Board, color: CheckersColor) -> Vec<SimpleMove> {
         let pieces = Self::get_pieces(board, color);
-        let (moving_pawns, moving_queens) = Self::get_moving_pieces(board, pieces, color);
+        let (moving_pawns, moving_queens) = Self::get_moving_pieces(board, &pieces, color);
         let mut pawn_moves = Self::get_possible_pawn_moves(board, &moving_pawns, color);
         let mut queen_moves = Self::get_possible_queen_moves(board, &moving_queens);
         let mut all_moves = Vec::new();
@@ -310,7 +310,7 @@ impl MoveExecutor {
         moves
     }
 
-    fn get_longest_captures(capturing_pieces: &mut Vec<Vec<Jump>>, capturing_queens: &mut Vec<Vec<Jumsp>>) -> Vec<Vec<Jump>> {
+    fn get_longest_captures(capturing_pieces: &mut Vec<Vec<Jump>>, capturing_queens: &mut Vec<Vec<Jump>>) -> Vec<Vec<Jump>> {
         let mut all_captures = Vec::new();
         all_captures.append(capturing_pieces);
         all_captures.append(capturing_queens);
@@ -425,7 +425,6 @@ impl MoveExecutor {
     }
 
     // Utils
-
     fn diagonal(board: &Board, queen: (usize, usize), direction: (i32, i32)) -> Vec<(usize, usize)> {
         let mut ret: Vec<(usize, usize)> = Vec::new();
         let (dx, dy) = direction;
@@ -437,6 +436,46 @@ impl MoveExecutor {
             }
         }
         ret
+    }
+
+    pub fn promote_to_queen(board: &Board) -> Board {
+        let mut board_copy = board.clone();
+        for i in 0..board_copy.size() {
+            let _ = match board.get_at(0, i) {
+                Ok(Some(piece)) if piece.color() == CheckersColor::White => board_copy.set_at(0, i, Board::WHITE_QUEEN),
+                _ => Ok(())
+            };
+            let _ = match board.get_at(board.size() - 1, i) {
+                Ok(Some(piece)) if piece.color() == CheckersColor::Black => board_copy.set_at(board.size() - 1, i, Board::BLACK_QUEEN),
+                _ => Ok(())
+            };
+        }
+        board_copy
+    }
+
+    pub fn has_game_ended(board: &Board, color: CheckersColor) -> bool {
+        match color {
+            CheckersColor::White if board.pieces_count(color) == 0 => return true,
+            CheckersColor::Black if board.pieces_count(color) == 0 => return true,
+            _ => {}
+        };
+        let pieces = Self::get_pieces(board, color);
+        let (pawn_captures, queen_captures) = Self::get_capturing_pieces(board, &pieces, color);
+        if !pawn_captures.is_empty() || !queen_captures.is_empty() {
+            return false;
+        }
+        let (pawn_moves, queen_moves) = Self::get_moving_pieces(board, &pieces, color);
+        if !pawn_moves.is_empty() || !queen_moves.is_empty() {
+            return false;
+        }
+        true
+    }
+
+    pub fn alias_from_coordinates(x: usize, y: usize) -> Result<String, CheckersError> {
+        if Self::is_in_bounds(x as i32, y as i32) {
+            return Ok(format!("{}{}", "ABCDEFGH".as_bytes()[y] as char, "87654321".as_bytes()[x] as char))
+        }
+        Err(CheckersError::IndexOutOfBounds)
     }
 }
 
