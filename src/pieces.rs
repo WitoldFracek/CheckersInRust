@@ -1,6 +1,5 @@
 use std::fmt::{Display, Formatter};
 use crate::Board;
-use crate::col::RGBColor;
 use crate::colors::colors as col;
 
 #[derive(Copy, Clone, PartialEq)]
@@ -10,12 +9,12 @@ pub enum CheckersColor {
 }
 
 impl CheckersColor {
-    // pub fn opposite_color(&self) -> Self {
-    //     match self {
-    //         CheckersColor::White(color) => CheckersColor::Black(255 - r, 255 - g, 255 - b),
-    //         CheckersColor::Black(r, g, b) => CheckersColor::White(255 - r, 255 - g, 255 - b),
-    //     }
-    // }
+    pub fn opposite_color(&self) -> Self {
+        match self {
+            CheckersColor::White => CheckersColor::Black,
+            CheckersColor::Black => CheckersColor::White,
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -43,10 +42,8 @@ impl Piece {
 
     pub fn color(&self) -> CheckersColor {
         match self {
-            Piece::Pawn(CheckersColor::White) => CheckersColor::White,
-            Piece::Queen(CheckersColor::White) => CheckersColor::White,
-            Piece::Pawn(CheckersColor::Black) => CheckersColor::Black,
-            Piece::Queen(CheckersColor::Black) => CheckersColor::Black,
+            Piece::Pawn(color) => *color,
+            Piece::Queen(color) => *color,
 
         }
     }

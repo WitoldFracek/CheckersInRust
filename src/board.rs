@@ -1,10 +1,9 @@
 use std::fmt;
 use std::fmt::Formatter;
-use std::vec::IntoIter;
 use crate::{Piece, White, Black, CheckersColor};
 use crate::checkers_utils::CheckersError;
 use crate::col;
-use crate::col::{colored_text, RGBColor};
+use crate::col::{colored_text};
 
 #[derive(Copy, Clone)]
 pub struct Board {

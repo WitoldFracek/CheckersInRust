@@ -1,12 +1,15 @@
-use std::cmp::max;
-use std::future::pending;
-use itertools::all;
 use crate::{Board, CheckersColor, Piece};
 use crate::moves::{Jump, Move, SimpleMove};
 
-pub fn alias_from_coordinates(x: usize, y: usize) -> String {
-    let letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-    format!("{}{}", letters[y], 8 - x)
+pub fn is_in_bounds(x: i32, y: i32) -> bool {
+    x >= 0 && x < 8 && y >= 0 && y < 8
+}
+
+pub fn alias_from_coordinates(x: usize, y: usize) -> Result<String, CheckersError> {
+    if is_in_bounds(x as i32, y as i32) {
+        return Ok(format!("{}{}", "ABCDEFGH".as_bytes()[y] as char, 8 - x))
+    }
+    Err(CheckersError::IndexOutOfBounds)
 }
 
 
@@ -100,7 +103,7 @@ impl MoveExecutor {
                     }
                 }
                 Some(Piece::Queen(_)) => {
-                    if Self::can_queen_move(board, (x, y), color) {
+                    if Self::can_queen_move(board, (x, y)) {
                         mov_queens.push((x, y));
                     }
                 }
@@ -146,9 +149,9 @@ impl MoveExecutor {
                     x_start,
                     y_start,
                     x_end: (x_start as i32 + 2 * dx) as usize,
-                    y_end: (y_start as i32 + 2 * dx) as usize,
+                    y_end: (y_start as i32 + 2 * dy) as usize,
                     x_capture: (x_start as i32 + dx) as usize,
-                    y_capture: (y_start as i32 + dx) as usize,
+                    y_capture: (y_start as i32 + dy) as usize,
                 };
                 acc.push(jump);
                 let mut board_copy = board.clone();
@@ -231,7 +234,7 @@ impl MoveExecutor {
                     }
                 } else if enemy_index != -1 {
                     let (ex, ey) = diagonal[enemy_index as usize];
-                    landing_spots.push(Jump::new(x, y, x_pos, y_pos, ex, ey));
+                    landing_spots.push(Jump::new(x, y, x_pos, y_pos, ex, ey).unwrap());
                 }
             }
         }
@@ -264,18 +267,18 @@ impl MoveExecutor {
         match color {
             CheckersColor::White => {
                 if Self::is_move_possible(board, pawn, (-1, -1)) {
-                    moves.push(SimpleMove::new(x, y, x - 1, y - 1));
+                    moves.push(SimpleMove::new(x, y, x - 1, y - 1).unwrap());
                 }
                 if Self::is_move_possible(board, pawn, (-1, 1)) {
-                    moves.push(SimpleMove::new(x, y, x - 1, y + 1));
+                    moves.push(SimpleMove::new(x, y, x - 1, y + 1).unwrap());
                 }
             }
             CheckersColor::Black => {
                 if Self::is_move_possible(board, pawn, (1, 1)) {
-                    moves.push(SimpleMove::new(x, y, x + 1, y + 1));
+                    moves.push(SimpleMove::new(x, y, x + 1, y + 1).unwrap());
                 }
                 if Self::is_move_possible(board, pawn, (1, -1)) {
-                    moves.push(SimpleMove::new(x, y, x + 1, y - 1));
+                    moves.push(SimpleMove::new(x, y, x + 1, y - 1).unwrap());
                 }
             }
         }
@@ -300,7 +303,7 @@ impl MoveExecutor {
             for (x_pos, y_pos) in diagonal {
                 if !obstacle_found {
                     if board.is_empty_at(x_pos, y_pos).unwrap() {
-                        moves.push(SimpleMove::new(x, y, x_pos, y_pos));
+                        moves.push(SimpleMove::new(x, y, x_pos, y_pos).unwrap());
                     } else {
                         obstacle_found = true;
                     }
@@ -339,10 +342,10 @@ impl MoveExecutor {
 
     fn is_pawn_jump_possible(board: &Board, pawn: (usize, usize), direction: (i32, i32), current_color: CheckersColor) -> bool {
         let ((x, y), (dx, dy)) = (pawn, direction);
-        if !Self::is_in_bounds(x as i32 + dx, y as i32 + dy) {
+        if !is_in_bounds(x as i32 + dx, y as i32 + dy) {
             return false;
         }
-        if !Self::is_in_bounds(x as i32 + 2 * dx, y as i32 + 2 * dy) {
+        if !is_in_bounds(x as i32 + 2 * dx, y as i32 + 2 * dy) {
             return false;
         }
         let x_capture = (x as i32 + dx) as usize;
@@ -401,7 +404,7 @@ impl MoveExecutor {
         }
     }
 
-    fn can_queen_move(board: &Board, queen: (usize, usize), current_color: CheckersColor) -> bool {
+    fn can_queen_move(board: &Board, queen: (usize, usize)) -> bool {  // color: CheckersColor
         for direction in Self::DIRECTIONS {
             if Self::is_move_possible(board, queen, direction) {
                 return true;
@@ -414,14 +417,10 @@ impl MoveExecutor {
         let (dx, dy) = direction;
         let (x, y) = piece;
         let (x_to, y_to) = (x as i32 + dx, y as i32 + dy);
-        if Self::is_in_bounds(x_to, y_to) {
+        if is_in_bounds(x_to, y_to) {
             return board.is_empty_at(x_to as usize, y_to as usize).unwrap();
         }
         false
-    }
-
-    fn is_in_bounds(x: i32, y: i32) -> bool {
-        x >= 0 && x < 8 && y >= 0 && y < 8
     }
 
     // Utils
@@ -431,7 +430,7 @@ impl MoveExecutor {
         let (x, y) = queen;
         for i in 1..board.size() as i32 {
             let (x_cal, y_cal) = (x as i32 + i * dx, y as i32 + i * dy);
-            if Self::is_in_bounds(x_cal, y_cal) {
+            if is_in_bounds(x_cal, y_cal) {
                 ret.push((x_cal as usize, y_cal as usize));
             }
         }
@@ -469,13 +468,6 @@ impl MoveExecutor {
             return false;
         }
         true
-    }
-
-    pub fn alias_from_coordinates(x: usize, y: usize) -> Result<String, CheckersError> {
-        if Self::is_in_bounds(x as i32, y as i32) {
-            return Ok(format!("{}{}", "ABCDEFGH".as_bytes()[y] as char, "87654321".as_bytes()[x] as char))
-        }
-        Err(CheckersError::IndexOutOfBounds)
     }
 }
 

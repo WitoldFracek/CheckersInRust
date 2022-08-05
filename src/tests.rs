@@ -11,7 +11,7 @@ mod tests {
         println!("=== Set element test ===");
         let mut board = Board::empty();
         let res1 = board.set_at(0, 1, Board::BLACK_QUEEN);
-        let res2 = board.set_at(1, 0, Board::BLACK_PAWN);
+        let _ = board.set_at(1, 0, Board::BLACK_PAWN);
         println!("Board with a BLACK pawn:\n{}", board.repr());
         let res2 = board.set_at(1, 0, Board::WHITE_PAWN);
         println!("Board with a WHITE pawn:\n{}", board.repr());
@@ -68,8 +68,8 @@ mod tests {
         let _ = board.set_at(3, 2, Board::WHITE_QUEEN);
         let _ = board.set_at(1, 2, Board::WHITE_PAWN);
         let captures = vec![
-            Jump::new(4, 1, 2, 3, 3, 2),
-            Jump::new(2, 3, 0, 1, 1, 2)
+            Jump::new(4, 1, 2, 3, 3, 2).unwrap(),
+            Jump::new(2, 3, 0, 1, 1, 2).unwrap()
         ];
         println!("Before capture:\n{}", board.repr());
         board = MoveExecutor::execute_capture(&mut board, &captures);
@@ -83,7 +83,7 @@ mod tests {
         let mut board = Board::empty();
         let _ = board.set_at(1, 2, Board::WHITE_PAWN);
         println!("Before move:\n{}", board.repr());
-        board = MoveExecutor::execute_move(board, SimpleMove::new(1, 2, 0, 3));
+        board = MoveExecutor::execute_move(board, SimpleMove::new(1, 2, 0, 3).unwrap());
         println!("After move:\n{}", board.repr());
         assert_eq!(board.get_board(), 0b0001_0000);
     }
