@@ -115,17 +115,17 @@ impl MoveExecutor {
     fn get_all_captures(board: &Board, color: CheckersColor) -> Vec<Vec<Jump>> {
         let pieces = Self::get_pieces(board, color);
         let (capturing_pawns, capturing_queens) = Self::get_capturing_pieces(board, &pieces, color);
-        let mut pawn_captures = Self::get_possible_pawn_captures(board, capturing_pawns, color);
-        let mut queen_captures = Self::get_possible_queen_captures(board, capturing_queens, color);
+        let mut pawn_captures = Self::get_possible_pawn_captures(board, &capturing_pawns, color);
+        let mut queen_captures = Self::get_possible_queen_captures(board, &capturing_queens, color);
         let mut all_captures = Vec::new();
         all_captures.append(&mut pawn_captures);
         all_captures.append(&mut queen_captures);
         all_captures
     }
 
-    pub fn get_possible_pawn_captures(board: &Board, capturing_pawns: Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
+    pub fn get_possible_pawn_captures(board: &Board, capturing_pawns: &Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
         let mut paths = Vec::new();
-        for (x, y) in capturing_pawns {
+        for &(x, y) in capturing_pawns {
             let mut board_copy = board.clone();
             board_copy.set_at(x, y, Board::EMPTY).unwrap();
             let mut pawn_path = Vec::new();
@@ -173,9 +173,9 @@ impl MoveExecutor {
         ret
     }
 
-    pub fn get_possible_queen_captures(board: &Board, capturing_queens: Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
+    pub fn get_possible_queen_captures(board: &Board, capturing_queens: &Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
         let mut paths = Vec::new();
-        for (x, y) in capturing_queens {
+        for &(x, y) in capturing_queens {
             let mut board_copy = board.clone();
             let _ = board_copy.set_at(x, y, Board::EMPTY);
             let mut queen_path = Vec::new();
@@ -313,7 +313,7 @@ impl MoveExecutor {
         moves
     }
 
-    fn get_longest_captures(capturing_pieces: &mut Vec<Vec<Jump>>, capturing_queens: &mut Vec<Vec<Jump>>) -> Vec<Vec<Jump>> {
+    pub fn get_longest_captures(capturing_pieces: &mut Vec<Vec<Jump>>, capturing_queens: &mut Vec<Vec<Jump>>) -> Vec<Vec<Jump>> {
         let mut all_captures = Vec::new();
         all_captures.append(capturing_pieces);
         all_captures.append(capturing_queens);

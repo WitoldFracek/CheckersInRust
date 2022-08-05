@@ -5,6 +5,7 @@ mod checkers_utils;
 mod moves;
 mod tests;
 mod players;
+mod checkers_game;
 
 use colors::colors as col;
 use pieces::{Piece, CheckersColor};
