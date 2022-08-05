@@ -37,7 +37,7 @@ fn get_correct_input<T>(list: &Vec<T>) -> usize {
 
 pub trait Player {
     fn move_piece(&self, possible_moves: &Vec<SimpleMove>, board: &Board, allow_first_random: bool) -> usize ;
-    fn capture(&self, possible_captures: &Vec<Vec<Jump>>, board: &Board, allow_first_random: bool) -> usize;
+    fn capture(&self, possible_captures: &Vec<&Vec<Jump>>, board: &Board, allow_first_random: bool) -> usize;
     fn get_name(&self) -> &String;
 }
 
@@ -66,13 +66,13 @@ impl Player for Human {
         get_correct_input(possible_moves)
     }
 
-    fn capture(&self, possible_captures: &Vec<Vec<Jump>>, board: &Board, allow_first_random: bool) -> usize {
+    fn capture(&self, possible_captures: &Vec<&Vec<Jump>>, board: &Board, allow_first_random: bool) -> usize {
         println!("{}", colored_text(format!("\nPlayer {} moves", self.name).as_str(), col::fg::color(153, 255, 51).as_str(), col::NONE, true));
         for (i, jumps) in possible_captures.iter().enumerate() {
             let start_jump = jumps[0];
             let start = alias_from_coordinates(start_jump.x_start, start_jump.y_start).unwrap();
             let mut path = String::new();
-            for jump in jumps {
+            for jump in *jumps {
                 path = format!("{} -> ", path);
                 path = format!("{}{}", path, alias_from_coordinates(jump.x_end, jump.y_end).unwrap());
             }
@@ -104,7 +104,7 @@ impl Player for DummyBot {
     }
 
     #[allow(dead_code)]
-    fn capture(&self, possible_captures: &Vec<Vec<Jump>>, board: &Board, allow_first_random: bool) -> usize {
+    fn capture(&self, possible_captures: &Vec<&Vec<Jump>>, board: &Board, allow_first_random: bool) -> usize {
         let mut rng = rand::thread_rng();
         rng.gen_range(0..possible_captures.len())
     }

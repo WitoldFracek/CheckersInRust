@@ -313,7 +313,7 @@ impl MoveExecutor {
         moves
     }
 
-    pub fn get_longest_captures(capturing_pieces: &mut Vec<Vec<Jump>>, capturing_queens: &mut Vec<Vec<Jump>>) -> Vec<Vec<Jump>> {
+    pub fn get_longest_captures<'a>(capturing_pieces: &mut Vec<&'a Vec<Jump>>, capturing_queens: &mut Vec<&'a Vec<Jump>>) -> Vec<&'a Vec<Jump>> {
         let mut all_captures = Vec::new();
         all_captures.append(capturing_pieces);
         all_captures.append(capturing_queens);
