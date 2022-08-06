@@ -28,23 +28,19 @@ mod tests {
     }
 
     #[test]
-    fn board_new_constructor_test() {
-        let res = match Board::new(2) {
-            Ok(_) => true,
-            Err(_) => false,
-        };
-        assert!(res);
+    fn board_new_constructor_ok_test() {
+        let res = Board::new(2);
+    }
 
-        let res = match Board::new(4) {
-            Ok(_) => true,
-            Err(_) => false,
-        };
-        assert!(!res);
+    #[test]
+    #[should_panic]
+    fn board_new_constructor_fail_test() {
+        let res = Board::new(4);
     }
 
     #[test]
     fn get_element_test() {
-        let board = Board::new(2).unwrap();
+        let board = Board::new(2);
         let elem = board.get_at(0, 1);
         let res = match elem {
             Ok(Some(Piece::Pawn(CheckersColor::Black))) => true,
@@ -106,7 +102,7 @@ mod tests {
 
     #[test]
     fn is_field_excluded_test() {
-        let mut board = Board::new(2).unwrap();
+        let mut board = Board::new(2);
         let _ = board.set_field_excluded(0, 1);
         assert!(board.is_field_excluded(0, 1).unwrap());
 
@@ -130,7 +126,7 @@ mod tests {
 
     #[test]
     fn is_empty_at_test() {
-        let board = Board::new(2).unwrap();
+        let board = Board::new(2);
         assert!(!board.is_empty_at(0, 1).unwrap());
         assert!(board.is_empty_at(2, 3).unwrap());
         assert_eq!(board.is_empty_at(10, 0), Err(CheckersError::IndexOutOfBounds));
@@ -216,7 +212,7 @@ mod tests {
     #[test]
     fn get_all_pawn_moves_test() {
         println!("Checking basic pawns...");
-        let board = Board::new(2).unwrap();
+        let board = Board::new(2);
         let possible_moves: Vec<(usize, usize)> = MoveExecutor::get_all_moves(&board, CheckersColor::Black)
             .iter()
             .map(|m| m.end_pair())

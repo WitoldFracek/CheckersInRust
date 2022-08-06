@@ -70,7 +70,8 @@ impl MoveExecutor {
         coordinates
     }
 
-    pub fn get_capturing_pieces(board: &Board, pieces: &Vec<(usize, usize)>, color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
+    pub fn get_capturing_pieces(board: &Board, pieces: &[(usize, usize)], color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
+        // let pieces = Self::get_pieces(board, color);
         let mut cap_pawns = Vec::new();
         let mut cap_queens = Vec::new();
         for &(x, y) in pieces {
@@ -91,7 +92,7 @@ impl MoveExecutor {
         (cap_pawns, cap_queens)
     }
 
-    fn get_moving_pieces(board: &Board, pieces: &Vec<(usize, usize)>, color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
+    fn get_moving_pieces(board: &Board, pieces: &[(usize, usize)], color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
         let mut mov_pawns = Vec::new();
         let mut mov_queens = Vec::new();
         for &(x, y) in pieces {
@@ -123,7 +124,7 @@ impl MoveExecutor {
         all_captures
     }
 
-    pub fn get_possible_pawn_captures(board: &Board, capturing_pawns: &Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
+    pub fn get_possible_pawn_captures(board: &Board, capturing_pawns: &[(usize, usize)], color: CheckersColor) -> Vec<Vec<Jump>> {
         let mut paths = Vec::new();
         for &(x, y) in capturing_pawns {
             let mut board_copy = board.clone();
@@ -173,7 +174,7 @@ impl MoveExecutor {
         ret
     }
 
-    pub fn get_possible_queen_captures(board: &Board, capturing_queens: &Vec<(usize, usize)>, color: CheckersColor) -> Vec<Vec<Jump>> {
+    pub fn get_possible_queen_captures(board: &Board, capturing_queens: &[(usize, usize)], color: CheckersColor) -> Vec<Vec<Jump>> {
         let mut paths = Vec::new();
         for &(x, y) in capturing_queens {
             let mut board_copy = board.clone();
@@ -252,7 +253,7 @@ impl MoveExecutor {
         all_moves
     }
 
-    fn get_possible_pawn_moves(board: &Board, moving_pawns: &Vec<(usize, usize)>, color: CheckersColor) -> Vec<SimpleMove> {
+    fn get_possible_pawn_moves(board: &Board, moving_pawns: &[(usize, usize)], color: CheckersColor) -> Vec<SimpleMove> {
         let mut moves = Vec::new();
         for &pawn in moving_pawns {
             let mut path = Self::get_pawn_move_path(board, pawn, color);
@@ -285,7 +286,7 @@ impl MoveExecutor {
         moves
     }
 
-    fn get_possible_queen_moves(board: &Board, moving_queens: &Vec<(usize, usize)>) -> Vec<SimpleMove> {
+    fn get_possible_queen_moves(board: &Board, moving_queens: &[(usize, usize)]) -> Vec<SimpleMove> {
         let mut moves = Vec::new();
         for &queen in moving_queens {
             let mut path = Self::get_queen_move_path(board, queen);
@@ -475,5 +476,5 @@ impl MoveExecutor {
 pub enum CheckersError {
     IndexOutOfBounds,
     RuleError,
-    PawnBinaryValueError
+    PawnBinaryValueError,
 }

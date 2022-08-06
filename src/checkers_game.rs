@@ -3,25 +3,22 @@ use crate::{Board, CheckersColor, MoveExecutor, Player};
 use crate::checkers_utils::CheckersError;
 use crate::moves::{Jump, Move};
 
-pub struct Game<'a, P: Player> {
-    pub player1: &'a P,
-    pub player2: &'a P,
+pub struct Game<'a> {
+    pub player1: &'a dyn Player,
+    pub player2: &'a dyn Player,
     pub pawn_rows: usize,
     pub allow_first_random: bool,
     pub board: Board,
     current_color: CheckersColor,
-    current_player: &'a P,
-    bot_count: usize,
-    random_used: usize,
+    current_player: &'a dyn Player,
+    bot_count: u8,
+    random_used: u8,
 }
 
-impl <'a, P: Player> Game<'a, P> {
-    pub fn new(p1: &'a P, p2: &'a P, rows: usize) -> Result<Self, CheckersError> {
-        let board_res = Board::new(rows);
-        if let Err(_) = board_res {
-            return Err(CheckersError::RuleError)
-        }
-        let board = board_res.unwrap();
+impl <'a> Game<'a> {
+    pub fn new(p1: &'a dyn Player, p2: &'a dyn Player, rows: usize) -> Self {
+        assert!(rows > 0 && rows < 4, "Invalid row number. Should be between 1 nad 3. Your input {}", rows);
+        let board = Board::new(rows);
         let game = Self {
             player1: p1,
             player2: p2,
@@ -33,7 +30,14 @@ impl <'a, P: Player> Game<'a, P> {
             bot_count: 0,
             random_used: 0,
         };
-        Ok(game)
+        game
+    }
+
+    pub fn new_with_bots(p1: &'a dyn Player, p2: &'a dyn Player, bot_count: u8, rows: usize) -> Self {
+        assert!(bot_count < 3 && bot_count > 0, "Bot count should be between 1 and 2. Your input {}", bot_count);
+        let mut game = Self::new(p1, p2, rows);
+        game.bot_count = bot_count;
+        game
     }
 
     pub fn play(&self) {

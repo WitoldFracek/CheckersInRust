@@ -41,8 +41,6 @@ pub trait Player {
     fn get_name(&self) -> &String;
 }
 
-pub trait Bot { }
-
 pub struct Human {
     name: String,
 }
@@ -94,7 +92,6 @@ impl DummyBot {
 
 }
 
-impl Bot for DummyBot { }
 impl Player for DummyBot {
 
     #[allow(dead_code)]

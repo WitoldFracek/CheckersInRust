@@ -1,5 +1,6 @@
 use std::fmt;
 use std::fmt::Formatter;
+use std::ops::Index;
 use crate::{Piece, White, Black, CheckersColor};
 use crate::checkers_utils::CheckersError;
 use crate::col;
@@ -198,13 +199,8 @@ impl Board {
         }
     }
 
-    pub fn new(pawn_rows: usize) -> Result<Board, CheckersError> {
-        match pawn_rows {
-            0 => return  Err(CheckersError::RuleError),
-            4..=usize::MAX => return Err(CheckersError::RuleError),
-            _ => {}
-        };
-
+    pub fn new(pawn_rows: usize) -> Board {
+        assert!(pawn_rows > 0 && pawn_rows < 4, "Invalid row number. Should be between 1 nad 3. Your input {}", pawn_rows);
         let empty_rows = 8 - 2 * pawn_rows;
         let mut board = 0_u128;
         for _ in 0..pawn_rows {
@@ -235,7 +231,7 @@ impl Board {
             _board: board
         };
 
-        return Ok(ret)
+        ret
     }
 
     pub fn from_mockup(mockup: [[&str; 8]; 8]) -> Board {
