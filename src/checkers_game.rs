@@ -5,8 +5,8 @@ use crate::checkers_utils::CheckersError;
 use crate::moves::{Jump, Move};
 
 pub struct Game<'a> {
-    pub player1: &'a mut dyn Player,
-    pub player2: &'a mut dyn Player,
+    pub player1: &'a dyn Player,
+    pub player2: &'a dyn Player,
     pub pawn_rows: usize,
     pub allow_first_random: bool,
     pub board: Board,
@@ -18,11 +18,10 @@ pub struct Game<'a> {
 }
 
 impl <'a> Game<'a> {
-    pub fn new(p1: &'a mut dyn Player, p2: &'a mut dyn Player, rows: usize) -> Self {
+    pub fn new(p1: &'a dyn Player, p2: &'a dyn Player, rows: usize) -> Self {
         assert!(rows > 0 && rows < 4, "Invalid row number. Should be between 1 nad 3. Your input {}", rows);
+        //assert_ne!(p1.get_color(), p2.get_color(), "Players cannot have the same color!\nP1: {:?}\nP2: {:?}", p1.get_color(), p2.get_color());
         let board = Board::new(rows);
-        p1.set_color(CheckersColor::White);
-        p2.set_color(CheckersColor::Black);
         let game = Self {
             player1: p1,
             player2: p2,
@@ -67,7 +66,12 @@ impl <'a> Game<'a> {
         }
     }
 
-    fn current_player(&mut self) -> &mut dyn Player  {
+    fn current_player(&self) -> &dyn Player  {
+        // if self.current_color == self.player1.get_color() {
+        //     self.player1
+        // } else {
+        //     self.player2
+        // }
         match self.current_color {
             CheckersColor::White => self.player1,
             CheckersColor::Black => self.player2,
@@ -93,11 +97,12 @@ impl <'a> Game<'a> {
         let longest_captures = MoveExecutor::get_longest_captures(
             &mut pawn_captures.iter().map(|v| v).collect(),
             &mut queen_captures.iter().map(|v| v).collect());
+        let board_copy = self.board.clone();
         let pos = if self.allow_first_random && (self.random_used < self.bot_count) {
             self.random_used = min(self.random_used + 1, self.bot_count);
-            self.current_player().capture(&longest_captures, &new_board, true)
+            self.current_player().capture(&longest_captures, board_copy, true)
         } else {
-            self.current_player().capture(&longest_captures, &self.board, false)
+            self.current_player().capture(&longest_captures, board_copy, false)
         };
         let player_choice = longest_captures[pos];
         self.board = MoveExecutor::execute_capture(&self.board, &player_choice);
@@ -108,11 +113,12 @@ impl <'a> Game<'a> {
         let mut queen_moves = MoveExecutor::get_possible_queen_moves(&self.board, mov_queens);
         pawn_moves.append(&mut queen_moves);
         let all_moves = pawn_moves;
+        let board_copy = self.board.clone();
         let pos = if self.allow_first_random && self.random_used < self.bot_count {
             self.random_used = min(self.random_used + 1, self.bot_count);
-            self.current_player().move_piece(&all_moves, &self.board, true)
+            self.current_player().move_piece(&all_moves, board_copy, true)
         } else {
-            self.current_player().move_piece(&all_moves, &self.board, false)
+            self.current_player().move_piece(&all_moves, board_copy, false)
         };
         let player_choice = all_moves[pos];
         self.check_for_idle(player_choice);

@@ -8,6 +8,7 @@ use crate::col;
 use crate::col::colored_text;
 use crate::moves::{Jump, Move, SimpleMove};
 use std::time::{Instant};
+use crate::statistics::NodeCounter;
 
 fn get_correct_input<T>(list: &Vec<T>) -> usize {
     use std::io::{stdin, stdout, Write};
@@ -40,8 +41,8 @@ fn get_correct_input<T>(list: &Vec<T>) -> usize {
 
 
 pub trait Player {
-    fn move_piece(&mut self, possible_moves: &Vec<SimpleMove>, board: &Board, allow_first_random: bool) -> usize ;
-    fn capture(&mut self, possible_captures: &Vec<&Vec<Jump>>, board: &Board, allow_first_random: bool) -> usize;
+    fn move_piece(&self, possible_moves: &Vec<SimpleMove>, board: Board, allow_first_random: bool) -> usize ;
+    fn capture(&self, possible_captures: &Vec<&Vec<Jump>>, board: Board, allow_first_random: bool) -> usize;
     fn get_name(&self) -> &String;
     fn set_color(&mut self, color: CheckersColor);
     fn get_color(&self) -> CheckersColor;
@@ -53,16 +54,16 @@ pub struct Human {
 }
 
 impl Human {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str, color: CheckersColor) -> Self {
         Self {
             name: String::from(name),
-            color: CheckersColor::White,
+            color,
         }
     }
 }
 
 impl Player for Human {
-    fn move_piece(&mut self, possible_moves: &Vec<SimpleMove>, board: &Board, allow_first_random: bool) -> usize {
+    fn move_piece(&self, possible_moves: &Vec<SimpleMove>, board: Board, allow_first_random: bool) -> usize {
         println!("{}", colored_text(format!("\nPlayer {} moves", self.name).as_str(), col::fg::color(153, 255, 51).as_str(), col::NONE, true));
         for (i, mov) in possible_moves.iter().enumerate() {
             let start = alias_from_coordinates(mov.x_start, mov.y_start).unwrap();
@@ -72,7 +73,7 @@ impl Player for Human {
         get_correct_input(possible_moves)
     }
 
-    fn capture(&mut self, possible_captures: &Vec<&Vec<Jump>>, board: &Board, allow_first_random: bool) -> usize {
+    fn capture(&self, possible_captures: &Vec<&Vec<Jump>>, board: Board, allow_first_random: bool) -> usize {
         println!("{}", colored_text(format!("\nPlayer {} moves", self.name).as_str(), col::fg::color(153, 255, 51).as_str(), col::NONE, true));
         for (i, jumps) in possible_captures.iter().enumerate() {
             let start_jump = jumps[0];
@@ -106,10 +107,10 @@ pub struct DummyBot {
 }
 
 impl DummyBot {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str, color: CheckersColor) -> Self {
         Self {
             name: name.to_string(),
-            color: CheckersColor::White,
+            color,
         }
     }
 }
@@ -117,13 +118,13 @@ impl DummyBot {
 impl Player for DummyBot {
 
     #[allow(dead_code)]
-    fn move_piece(&mut self, possible_moves: &Vec<SimpleMove>, board: &Board, allow_first_random: bool) -> usize {
+    fn move_piece(&self, possible_moves: &Vec<SimpleMove>, board: Board, allow_first_random: bool) -> usize {
         let mut rng = rand::thread_rng();
         rng.gen_range(0..possible_moves.len())
     }
 
     #[allow(dead_code)]
-    fn capture(&mut self, possible_captures: &Vec<&Vec<Jump>>, board: &Board, allow_first_random: bool) -> usize {
+    fn capture(&self, possible_captures: &Vec<&Vec<Jump>>, board: Board, allow_first_random: bool) -> usize {
         let mut rng = rand::thread_rng();
         rng.gen_range(0..possible_captures.len())
     }
@@ -145,23 +146,30 @@ pub struct MinMaxBot<'a> {
     name: String,
     depth: usize,
     estimator: &'a dyn Estimator,
-    node_count: usize,
     color: CheckersColor,
+    node_counter: Option<NodeCounter>,
 }
 
 impl <'a> MinMaxBot<'a> {
-    pub fn new(name: &str, depth: usize, estimator: &'a dyn Estimator) -> Self {
+    pub fn new(name: &str, color: CheckersColor, depth: usize, estimator: &'a dyn Estimator) -> Self {
         Self {
             name: name.to_string(),
             depth,
             estimator,
-            node_count: 0,
-            color: CheckersColor::White,
+            color,
+            node_counter: None,
         }
     }
 
-    fn minmax(&mut self, board: Board, depth: usize, current_color: CheckersColor, maximising: bool) -> i32 {
-        self.node_count += 1;
+    pub fn set_node_counter(&mut self, node_counter: NodeCounter) {
+        self.node_counter = Some(node_counter);
+    }
+
+    fn minmax(&self, board: Board, depth: usize, current_color: CheckersColor, maximising: bool) -> i32 {
+        // self.node_count += 1;
+        if let Some(_) = &self.node_counter {
+            self.node_counter.unwrap().up();
+        }
         if depth == 0 {
             return self.estimator.estimate(board, self.color, false);
         }
@@ -183,7 +191,7 @@ impl <'a> MinMaxBot<'a> {
         }
     }
 
-    fn minmax_moves(&mut self, board: Board, moves: &[SimpleMove], depth: usize, current_color: CheckersColor, maximising: bool) -> i32 {
+    fn minmax_moves(&self, board: Board, moves: &[SimpleMove], depth: usize, current_color: CheckersColor, maximising: bool) -> i32 {
         if maximising {
             let mut current_best = i32::MIN;
             for &m in moves {
@@ -208,7 +216,7 @@ impl <'a> MinMaxBot<'a> {
         current_worst
     }
 
-    fn minmax_jumps(&mut self, board: Board, jumps: &Vec<&Vec<Jump>>, depth: usize, current_color: CheckersColor, maximising: bool) -> i32 {
+    fn minmax_jumps(&self, board: Board, jumps: &Vec<&Vec<Jump>>, depth: usize, current_color: CheckersColor, maximising: bool) -> i32 {
         if maximising {
             let mut current_best = i32::MIN;
             for &jump in jumps {
@@ -235,9 +243,12 @@ impl <'a> MinMaxBot<'a> {
 }
 
 impl Player for MinMaxBot<'_> {
-    fn move_piece(&mut self, possible_moves: &Vec<SimpleMove>, board: &Board, allow_first_random: bool) -> usize {
+    fn move_piece(&self, possible_moves: &Vec<SimpleMove>, board: Board, allow_first_random: bool) -> usize {
         let mut best_moves = Vec::new();
-        self.node_count = 0;
+        // self.node_count = 0;
+        if let Some(counter) = &self.node_counter {
+            self.node_counter.unwrap().zero();
+        }
         let mut best_eval = i32::MIN;
         if allow_first_random {
             let mut rng = rand::thread_rng();
@@ -248,14 +259,18 @@ impl Player for MinMaxBot<'_> {
             let elapsed = start.elapsed();
             println!("{:?}", self.color);
             println!("Computed in:    {:?} s", elapsed.as_millis() / 1000);
-            println!("Visited nodes:  {:?}\n", self.node_count);
+            if let Some(counter) = &self.node_counter {
+                println!("Visited nodes:  {:?}\n", counter.nodes);
+            }
             return 0;
         }
         for (i, &mov) in possible_moves.iter().enumerate() {
             let mut new_board = board.clone();
             new_board = MoveExecutor::execute_move(new_board, mov);
             let eval = self.minmax(new_board, self.depth - 1, self.color.opposite_color(), false);
-            self.node_count += 1;
+            if let Some(_) = &self.node_counter {
+                self.node_counter.unwrap().up();
+            }
             if eval > best_eval {
                 best_eval = eval;
                 best_moves.clear();
@@ -267,13 +282,50 @@ impl Player for MinMaxBot<'_> {
         let elapsed = start.elapsed();
         println!("{:?}", self.color);
         println!("Computed in:    {:?} s", elapsed.as_millis() / 1000);
-        println!("Visited nodes:  {:?}\n", self.node_count);
+        if let Some(counter) = &self.node_counter {
+                println!("Visited nodes:  {:?}\n", counter.nodes);
+        }
         let mut rng = rand::thread_rng();
         best_moves[rng.gen_range(0..best_moves.len())]
     }
 
-    fn capture(&mut self, possible_captures: &Vec<&Vec<Jump>>, board: &Board, allow_first_random: bool) -> usize {
-        todo!()
+    fn capture(&self, possible_captures: &Vec<&Vec<Jump>>, board: Board, allow_first_random: bool) -> usize {
+        let mut best_captures = Vec::new();
+        let mut best_eval = i32::MIN;
+        if allow_first_random {
+            let mut rng = rand::thread_rng();
+            return rng.gen_range(0..possible_captures.len());
+        }
+        let start = Instant::now();
+        if possible_captures.len() == 1 {
+            let elapsed = start.elapsed();
+            println!("{:?}", self.color);
+            println!("Computed in:    {:?} s", elapsed.as_millis() / 1000);
+            if let Some(counter) = &self.node_counter {
+                println!("Visited nodes:  {:?}\n", counter.nodes);
+            }
+            return 0;
+        }
+        for (i, &capture_path) in possible_captures.iter().enumerate() {
+            let mut new_board = board.clone();
+            new_board = MoveExecutor::execute_capture(&new_board, capture_path);
+            let eval = self.minmax(new_board, self.depth - 1, self.color.opposite_color(), false);
+            if eval > best_eval {
+                best_eval = eval;
+                best_captures.clear();
+                best_captures.push(i);
+            } else if eval == best_eval {
+                best_captures.push(i);
+            }
+        }
+        let elapsed = start.elapsed();
+        println!("{:?}", self.color);
+        println!("Computed in:    {:?} s", elapsed.as_millis() / 1000);
+        if let Some(counter) = &self.node_counter {
+            println!("Visited nodes:  {:?}\n", counter.nodes);
+        }
+        let mut rng = rand::thread_rng();
+        best_captures[rng.gen_range(0..best_captures.len())]
     }
 
     fn get_name(&self) -> &String {
