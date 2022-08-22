@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 use crate::Board;
 use crate::colors::colors as col;
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum CheckersColor {
     White,
     Black,

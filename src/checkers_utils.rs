@@ -92,7 +92,7 @@ impl MoveExecutor {
         (cap_pawns, cap_queens)
     }
 
-    fn get_moving_pieces(board: &Board, pieces: &[(usize, usize)], color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
+    pub fn get_moving_pieces(board: &Board, pieces: &[(usize, usize)], color: CheckersColor) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
         let mut mov_pawns = Vec::new();
         let mut mov_queens = Vec::new();
         for &(x, y) in pieces {
@@ -113,7 +113,7 @@ impl MoveExecutor {
         (mov_pawns, mov_queens)
     }
 
-    fn get_all_captures(board: &Board, color: CheckersColor) -> Vec<Vec<Jump>> {
+    pub fn get_all_captures(board: &Board, color: CheckersColor) -> Vec<Vec<Jump>> {
         let pieces = Self::get_pieces(board, color);
         let (capturing_pawns, capturing_queens) = Self::get_capturing_pieces(board, &pieces, color);
         let mut pawn_captures = Self::get_possible_pawn_captures(board, &capturing_pawns, color);
@@ -253,7 +253,7 @@ impl MoveExecutor {
         all_moves
     }
 
-    fn get_possible_pawn_moves(board: &Board, moving_pawns: &[(usize, usize)], color: CheckersColor) -> Vec<SimpleMove> {
+    pub fn get_possible_pawn_moves(board: &Board, moving_pawns: &[(usize, usize)], color: CheckersColor) -> Vec<SimpleMove> {
         let mut moves = Vec::new();
         for &pawn in moving_pawns {
             let mut path = Self::get_pawn_move_path(board, pawn, color);
@@ -286,7 +286,7 @@ impl MoveExecutor {
         moves
     }
 
-    fn get_possible_queen_moves(board: &Board, moving_queens: &[(usize, usize)]) -> Vec<SimpleMove> {
+    pub fn get_possible_queen_moves(board: &Board, moving_queens: &[(usize, usize)]) -> Vec<SimpleMove> {
         let mut moves = Vec::new();
         for &queen in moving_queens {
             let mut path = Self::get_queen_move_path(board, queen);
@@ -453,18 +453,18 @@ impl MoveExecutor {
         board_copy
     }
 
-    pub fn has_game_ended(board: &Board, color: CheckersColor) -> bool {
+    pub fn has_game_ended(board: Board, color: CheckersColor) -> bool {
         match color {
             CheckersColor::White if board.pieces_count(color) == 0 => return true,
             CheckersColor::Black if board.pieces_count(color) == 0 => return true,
             _ => {}
         };
-        let pieces = Self::get_pieces(board, color);
-        let (pawn_captures, queen_captures) = Self::get_capturing_pieces(board, &pieces, color);
+        let pieces = Self::get_pieces(&board, color);
+        let (pawn_captures, queen_captures) = Self::get_capturing_pieces(&board, &pieces, color);
         if !pawn_captures.is_empty() || !queen_captures.is_empty() {
             return false;
         }
-        let (pawn_moves, queen_moves) = Self::get_moving_pieces(board, &pieces, color);
+        let (pawn_moves, queen_moves) = Self::get_moving_pieces(&board, &pieces, color);
         if !pawn_moves.is_empty() || !queen_moves.is_empty() {
             return false;
         }
